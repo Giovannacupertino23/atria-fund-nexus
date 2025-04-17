@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
 // Tipos
@@ -33,6 +32,7 @@ export interface Company {
   segment: Segment;
   status: PipelineStatus;
   documents: Document[];
+  responsiblePerson?: string; // Novo campo adicionado
   teamMember?: string;
   lastContact?: Date;
   nextMeeting?: Date;
@@ -83,6 +83,7 @@ const initialCompanies: Company[] = [
     documents: [
       { id: "d1", name: "Contrato", type: "PDF", url: "#", uploadDate: new Date(2023, 5, 12) }
     ],
+    responsiblePerson: "Marcos Silva",
     teamMember: "1",
     lastContact: new Date(2023, 9, 15),
     nextMeeting: new Date(2023, 10, 5)
@@ -102,6 +103,7 @@ const initialCompanies: Company[] = [
     segment: "Marketplace",
     status: "diligence",
     documents: [],
+    responsiblePerson: "Ana Luiza Costa",
     teamMember: "2",
     lastContact: new Date(2023, 9, 20)
   },
@@ -122,6 +124,7 @@ const initialCompanies: Company[] = [
     documents: [
       { id: "d2", name: "Apresentação", type: "PPTX", url: "#", uploadDate: new Date(2023, 8, 25) }
     ],
+    responsiblePerson: "Rafael Oliveira",
     teamMember: "3"
   },
   {
@@ -139,6 +142,7 @@ const initialCompanies: Company[] = [
     segment: "Healthtech",
     status: "agendado",
     documents: [],
+    responsiblePerson: "Tatiana Santos",
     teamMember: "4",
     nextMeeting: new Date(2023, 10, 8)
   },
@@ -157,6 +161,7 @@ const initialCompanies: Company[] = [
     segment: "Edtech",
     status: "prospect",
     documents: [],
+    responsiblePerson: "João Pedro Mendes",
     teamMember: "5"
   },
   {
@@ -174,6 +179,7 @@ const initialCompanies: Company[] = [
     segment: "E-commerce",
     status: "prospect",
     documents: [],
+    responsiblePerson: "Camila Ferreira",
     teamMember: "6"
   },
   {
@@ -191,6 +197,7 @@ const initialCompanies: Company[] = [
     segment: "Outros",
     status: "reunido",
     documents: [],
+    responsiblePerson: "Bruno Almeida",
     teamMember: "7"
   },
   {
@@ -210,6 +217,7 @@ const initialCompanies: Company[] = [
     documents: [
       { id: "d3", name: "Contrato", type: "PDF", url: "#", uploadDate: new Date(2023, 6, 18) }
     ],
+    responsiblePerson: "Marcos Silva",
     teamMember: "1"
   },
   {
@@ -227,6 +235,7 @@ const initialCompanies: Company[] = [
     segment: "Fintech",
     status: "agendado",
     documents: [],
+    responsiblePerson: "Ana Luiza Costa",
     teamMember: "2",
     nextMeeting: new Date(2023, 10, 12)
   },
@@ -245,6 +254,7 @@ const initialCompanies: Company[] = [
     segment: "Outros",
     status: "prospect",
     documents: [],
+    responsiblePerson: "Rafael Oliveira",
     teamMember: "3"
   }
 ];

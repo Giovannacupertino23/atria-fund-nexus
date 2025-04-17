@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCompany, Company } from "@/context/CompanyContext";
@@ -27,7 +26,8 @@ const Companies = () => {
     nps: 0,
     website: "",
     segment: "SaaS",
-    status: "prospect"
+    status: "prospect",
+    responsiblePerson: ""
   });
   const navigate = useNavigate();
 
@@ -41,7 +41,6 @@ const Companies = () => {
     const { name, value } = e.target;
     let parsedValue: string | number = value;
     
-    // Convert numeric fields
     if (["revenue", "profitMargin", "retention", "churn", "cac", "ltv", "nps"].includes(name)) {
       parsedValue = value === "" ? 0 : parseFloat(value);
     }
@@ -71,7 +70,8 @@ const Companies = () => {
         nps: 0,
         website: "",
         segment: "SaaS",
-        status: "prospect"
+        status: "prospect",
+        responsiblePerson: ""
       });
       setIsDialogOpen(false);
     }
@@ -249,6 +249,16 @@ const Companies = () => {
                     <option value="investida">Investida</option>
                   </select>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="responsiblePerson">Pessoa Responsável</Label>
+                  <Input
+                    id="responsiblePerson"
+                    name="responsiblePerson"
+                    placeholder="Nome do responsável"
+                    value={newCompany.responsiblePerson}
+                    onChange={handleInputChange}
+                  />
+                </div>
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <Button 
@@ -299,12 +309,13 @@ const Companies = () => {
                       <TableHead>Receita Mensal</TableHead>
                       <TableHead>Margem</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Responsável</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCompanies.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                           Nenhuma empresa encontrada.
                         </TableCell>
                       </TableRow>
@@ -336,6 +347,7 @@ const Companies = () => {
                               {company.status === 'prospect' && 'Prospect'}
                             </span>
                           </TableCell>
+                          <TableCell>{company.responsiblePerson || '-'}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -406,6 +418,10 @@ const Companies = () => {
                               </a>
                             </div>
                           )}
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Responsável:</span>
+                            <span>{company.responsiblePerson || '-'}</span>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

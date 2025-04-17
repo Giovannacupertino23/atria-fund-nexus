@@ -11,54 +11,95 @@ export type Database = {
     Tables: {
       companies: {
         Row: {
-          cac: number | null
-          churn_rate: number | null
-          cnpj: string | null
-          created_at: string
+          cac: number
+          churn: number
+          cnpj: string
+          created_at: string | null
           id: string
-          ltv: number | null
-          monthly_revenue: number | null
+          ltv: number
           name: string
-          nps: number | null
-          profit_margin: number | null
-          retention_rate: number | null
-          updated_at: string
-          user_id: string
+          nps: number
+          profit_margin: number
+          responsible_person: string | null
+          retention: number
+          revenue: number
+          segment: string
+          status: string
+          updated_at: string | null
           website: string | null
         }
         Insert: {
-          cac?: number | null
-          churn_rate?: number | null
-          cnpj?: string | null
-          created_at?: string
+          cac?: number
+          churn?: number
+          cnpj: string
+          created_at?: string | null
           id?: string
-          ltv?: number | null
-          monthly_revenue?: number | null
+          ltv?: number
           name: string
-          nps?: number | null
-          profit_margin?: number | null
-          retention_rate?: number | null
-          updated_at?: string
-          user_id: string
+          nps?: number
+          profit_margin?: number
+          responsible_person?: string | null
+          retention?: number
+          revenue?: number
+          segment: string
+          status: string
+          updated_at?: string | null
           website?: string | null
         }
         Update: {
-          cac?: number | null
-          churn_rate?: number | null
-          cnpj?: string | null
-          created_at?: string
+          cac?: number
+          churn?: number
+          cnpj?: string
+          created_at?: string | null
           id?: string
-          ltv?: number | null
-          monthly_revenue?: number | null
+          ltv?: number
           name?: string
-          nps?: number | null
-          profit_margin?: number | null
-          retention_rate?: number | null
-          updated_at?: string
-          user_id?: string
+          nps?: number
+          profit_margin?: number
+          responsible_person?: string | null
+          retention?: number
+          revenue?: number
+          segment?: string
+          status?: string
+          updated_at?: string | null
           website?: string | null
         }
         Relationships: []
+      }
+      documents: {
+        Row: {
+          company_id: string
+          id: string
+          name: string
+          type: string
+          upload_date: string | null
+          url: string
+        }
+        Insert: {
+          company_id: string
+          id?: string
+          name: string
+          type: string
+          upload_date?: string | null
+          url: string
+        }
+        Update: {
+          company_id?: string
+          id?: string
+          name?: string
+          type?: string
+          upload_date?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
