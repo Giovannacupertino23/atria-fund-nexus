@@ -8,12 +8,25 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Building2, ExternalLink } from "lucide-react";
+import { Search, Plus, Building2, ExternalLink, Trash2 } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const Companies = () => {
-  const { companies, addCompany } = useCompany();
+  const { companies, addCompany, deleteCompany } = useCompany();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
   const [newCompany, setNewCompany] = useState<Partial<Company>>({
     name: "",
     cnpj: "",
@@ -30,6 +43,7 @@ const Companies = () => {
     responsiblePerson: ""
   });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const filteredCompanies = companies.filter(
     (company) =>
@@ -74,6 +88,24 @@ const Companies = () => {
         responsiblePerson: ""
       });
       setIsDialogOpen(false);
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, companyId: string) => {
+    e.stopPropagation();
+    setCompanyToDelete(companyId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (companyToDelete) {
+      deleteCompany(companyToDelete);
+      toast({
+        title: "Empresa excluída",
+        description: "A empresa foi excluída com sucesso.",
+      });
+      setIsDeleteDialogOpen(false);
+      setCompanyToDelete(null);
     }
   };
 
@@ -310,12 +342,13 @@ const Companies = () => {
                       <TableHead>Margem</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Responsável</TableHead>
+                      <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCompanies.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
                           Nenhuma empresa encontrada.
                         </TableCell>
                       </TableRow>
@@ -324,14 +357,16 @@ const Companies = () => {
                         <TableRow 
                           key={company.id} 
                           className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => navigate(`/company/${company.id}`)}
                         >
-                          <TableCell className="font-medium">{company.name}</TableCell>
-                          <TableCell>{company.cnpj}</TableCell>
-                          <TableCell>{company.segment}</TableCell>
-                          <TableCell>{formatCurrency(company.revenue)}</TableCell>
-                          <TableCell>{company.profitMargin}%</TableCell>
-                          <TableCell>
+                          <TableCell 
+                            className="font-medium"
+                            onClick={() => navigate(`/company/${company.id}`)}
+                          >{company.name}</TableCell>
+                          <TableCell onClick={() => navigate(`/company/${company.id}`)}>{company.cnpj}</TableCell>
+                          <TableCell onClick={() => navigate(`/company/${company.id}`)}>{company.segment}</TableCell>
+                          <TableCell onClick={() => navigate(`/company/${company.id}`)}>{formatCurrency(company.revenue)}</TableCell>
+                          <TableCell onClick={() => navigate(`/company/${company.id}`)}>{company.profitMargin}%</TableCell>
+                          <TableCell onClick={() => navigate(`/company/${company.id}`)}>
                             <span className={`
                               px-2.5 py-0.5 rounded-full text-xs font-medium 
                               ${company.status === 'investida' ? 'bg-green-100 text-green-800' : ''}
@@ -347,7 +382,17 @@ const Companies = () => {
                               {company.status === 'prospect' && 'Prospect'}
                             </span>
                           </TableCell>
-                          <TableCell>{company.responsiblePerson || '-'}</TableCell>
+                          <TableCell onClick={() => navigate(`/company/${company.id}`)}>{company.responsiblePerson || '-'}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                              onClick={(e) => handleDeleteClick(e, company.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
@@ -365,10 +410,17 @@ const Companies = () => {
                   filteredCompanies.map((company) => (
                     <Card 
                       key={company.id} 
-                      className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => navigate(`/company/${company.id}`)}
+                      className="relative hover:shadow-md transition-shadow"
                     >
-                      <CardHeader className="pb-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                        onClick={(e) => handleDeleteClick(e, company.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <CardHeader className="pb-2" onClick={() => navigate(`/company/${company.id}`)}>
                         <div className="flex justify-between items-start">
                           <div className="space-y-1">
                             <CardTitle className="text-lg">{company.name}</CardTitle>
@@ -390,7 +442,7 @@ const Companies = () => {
                           </span>
                         </div>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent onClick={() => navigate(`/company/${company.id}`)}>
                         <div className="space-y-3">
                           <div className="flex justify-between items-center text-sm">
                             <span className="text-muted-foreground">Segmento:</span>
@@ -432,6 +484,28 @@ const Companies = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta empresa? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCompanyToDelete(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
