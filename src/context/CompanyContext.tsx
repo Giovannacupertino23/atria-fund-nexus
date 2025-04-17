@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 // Tipos
 export type PipelineStatus = 
@@ -344,29 +345,71 @@ const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
 // Provider
 export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [companies, setCompanies] = useState<Company[]>(initialCompanies);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(teamMembersData);
 
-  // Adicionar empresa
-  const addCompany = (company: Omit<Company, "id" | "documents">) => {
-    const newCompany: Company = {
-      ...company,
-      id: Date.now().toString(),
-      documents: []
-    };
-    setCompanies((prev) => [...prev, newCompany]);
+  // Fetch companies from Supabase on component mount
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const fetchCompanies = async () => {
+    const { data, error } = await supabase.from('companies').select('*');
+    if (error) {
+      console.error('Error fetching companies:', error);
+    } else {
+      setCompanies(data || []);
+    }
   };
 
-  // Atualizar empresa
-  const updateCompany = (id: string, company: Partial<Company>) => {
-    setCompanies((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...company } : c))
-    );
+  const addCompany = async (company: Omit<Company, "id" | "documents">) => {
+    const { data, error } = await supabase
+      .from('companies')
+      .insert(company)
+      .select();
+
+    if (error) {
+      console.error('Error adding company:', error);
+      return;
+    }
+
+    if (data) {
+      setCompanies(prev => [...prev, { ...data[0], documents: [] }]);
+    }
   };
 
-  // Excluir empresa
-  const deleteCompany = (id: string) => {
-    setCompanies((prev) => prev.filter((company) => company.id !== id));
+  const updateCompany = async (id: string, company: Partial<Company>) => {
+    const { data, error } = await supabase
+      .from('companies')
+      .update(company)
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      console.error('Error updating company:', error);
+      return;
+    }
+
+    if (data) {
+      setCompanies(prev => 
+        prev.map(c => c.id === id ? { ...c, ...data[0] } : c)
+      );
+    }
+  };
+
+  const deleteCompany = async (id: string) => {
+    const { error } = await supabase
+      .from('companies')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting company:', error);
+      return;
+    }
+
+    setCompanies(prev => prev.filter(company => company.id !== id));
   };
 
   // Obter empresa por ID
@@ -422,11 +465,10 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
     return companies.filter((company) => company.teamMember === teamMemberId);
   };
 
-  // Valor do contexto
   const value = {
     companies,
     events,
-    teamMembers: teamMembersData,
+    teamMembers,
     addCompany,
     updateCompany,
     deleteCompany,
