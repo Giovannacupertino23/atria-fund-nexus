@@ -165,7 +165,7 @@ const Companies = () => {
                       {filteredCompanies.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                            Nenhuma empresa encontrada.
+                            Nenhuma empresa cadastrada.
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -224,7 +224,7 @@ const Companies = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredCompanies.length === 0 ? (
                     <div className="col-span-full text-center py-12 text-muted-foreground">
-                      Nenhuma empresa encontrada.
+                      Nenhuma empresa cadastrada.
                     </div>
                   ) : (
                     filteredCompanies.map((company) => (

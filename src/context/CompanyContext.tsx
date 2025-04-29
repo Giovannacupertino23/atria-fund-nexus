@@ -1,8 +1,10 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Types
 export type CompanyStatus = "approved" | "evaluating" | "not_approved";
+export type PipelineStatus = "prospect" | "meeting_scheduled" | "meeting_done" | "due_diligence" | "invested";
 export type ScoreColor = "green" | "orange" | "red";
 export type CashFlow = "positive" | "negative";
 
@@ -12,6 +14,10 @@ export interface Company {
   sector: string;
   about?: string | null;
   cnpj: string;
+  website?: string | null;
+  responsible?: string | null;
+  cac?: number | null;
+  average_ticket?: number | null;
   market_cap?: number | null;
   annual_revenue_2024?: number | null;
   net_margin_2024?: number | null;
@@ -26,6 +32,7 @@ export interface Company {
   cash_flow?: CashFlow | null;
   dividend_distribution?: boolean | null;
   status?: CompanyStatus | null;
+  pipeline_status?: PipelineStatus | null;
   final_score?: number | null;
   score_color?: ScoreColor | null;
   created_at?: string | null;
@@ -213,7 +220,7 @@ interface CompanyContextType {
   events: CalendarEvent[];
   teamMembers: TeamMember[];
   loadCompanies: () => Promise<void>;
-  addCompany: (company: Omit<Company, "id" | "created_at" | "updated_at" | "final_score" | "score_color">) => Promise<void>;
+  addCompany: (company: Omit<Company, "id" | "created_at" | "updated_at" | "final_score" | "score_color">) => Promise<Company | undefined>;
   updateCompany: (id: string, company: Partial<Company>) => Promise<void>;
   deleteCompany: (id: string) => Promise<void>;
   getCompanyById: (id: string) => Company | undefined;
@@ -277,11 +284,14 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (error) throw error;
       
       if (data && data.length > 0) {
-        setCompanies(prev => [...prev, data[0] as Company]);
-        return data[0];
+        const newCompany = data[0] as Company;
+        setCompanies(prev => [...prev, newCompany]);
+        return newCompany;
       }
+      return undefined;
     } catch (error) {
       console.error('Error adding company:', error);
+      return undefined;
     }
   };
 

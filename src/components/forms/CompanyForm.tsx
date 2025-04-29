@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useCompany, Company } from "@/context/CompanyContext";
+import { useCompany, Company, PipelineStatus } from "@/context/CompanyContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -28,6 +28,10 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ onSuccess, onCancel }) => {
       sector: "",
       about: "",
       cnpj: "",
+      website: "",
+      responsible: "",
+      cac: undefined,
+      average_ticket: undefined,
       market_cap: undefined,
       annual_revenue_2024: undefined,
       net_margin_2024: undefined,
@@ -41,7 +45,8 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ onSuccess, onCancel }) => {
       leverage: undefined,
       cash_flow: undefined,
       dividend_distribution: false,
-      status: "evaluating"
+      status: "evaluating",
+      pipeline_status: "prospect"
     }
   });
   
@@ -116,6 +121,78 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ onSuccess, onCancel }) => {
               </FormItem>
             )}
           />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="website"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Website</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://www.empresa.com.br" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="responsible"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Responsável</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nome do responsável" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="cac"
+              render={({ field: { onChange, value, ...fieldProps } }) => (
+                <FormItem>
+                  <FormLabel>CAC (R$)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      placeholder="0" 
+                      {...fieldProps}
+                      value={value === undefined ? '' : value}
+                      onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="average_ticket"
+              render={({ field: { onChange, value, ...fieldProps } }) => (
+                <FormItem>
+                  <FormLabel>Ticket Médio (R$)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      placeholder="0" 
+                      {...fieldProps}
+                      value={value === undefined ? '' : value}
+                      onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           
           <FormField
             control={form.control}
@@ -440,6 +517,30 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ onSuccess, onCancel }) => {
               )}
             />
           </div>
+
+          <FormField
+            control={form.control}
+            name="pipeline_status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status Pipeline</FormLabel>
+                <FormControl>
+                  <select 
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                    value={field.value || "prospect"}
+                    onChange={(e) => field.onChange(e.target.value || "prospect")}
+                  >
+                    <option value="prospect">Prospects</option>
+                    <option value="meeting_scheduled">Reunião agendada</option>
+                    <option value="meeting_done">Reunião feita</option>
+                    <option value="due_diligence">Due Diligence feita</option>
+                    <option value="invested">Investida</option>
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
         
         <div className="flex justify-end space-x-2 pt-6">
