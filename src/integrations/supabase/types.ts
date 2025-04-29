@@ -13,6 +13,8 @@ export type Database = {
         Row: {
           about: string | null
           annual_revenue_2024: number | null
+          average_ticket: number | null
+          cac: number | null
           cash_flow: string | null
           cnpj: string
           created_at: string | null
@@ -26,11 +28,14 @@ export type Database = {
           market_cap: number | null
           name: string
           net_margin_2024: number | null
+          pipeline_status: string | null
+          responsible: string | null
           risk_factors: string | null
           score_color: string | null
           sector: string
           status: string | null
           updated_at: string | null
+          website: string | null
           yoy_growth_21_22: number | null
           yoy_growth_22_23: number | null
           yoy_growth_23_24: number | null
@@ -38,6 +43,8 @@ export type Database = {
         Insert: {
           about?: string | null
           annual_revenue_2024?: number | null
+          average_ticket?: number | null
+          cac?: number | null
           cash_flow?: string | null
           cnpj: string
           created_at?: string | null
@@ -51,11 +58,14 @@ export type Database = {
           market_cap?: number | null
           name: string
           net_margin_2024?: number | null
+          pipeline_status?: string | null
+          responsible?: string | null
           risk_factors?: string | null
           score_color?: string | null
           sector: string
           status?: string | null
           updated_at?: string | null
+          website?: string | null
           yoy_growth_21_22?: number | null
           yoy_growth_22_23?: number | null
           yoy_growth_23_24?: number | null
@@ -63,6 +73,8 @@ export type Database = {
         Update: {
           about?: string | null
           annual_revenue_2024?: number | null
+          average_ticket?: number | null
+          cac?: number | null
           cash_flow?: string | null
           cnpj?: string
           created_at?: string | null
@@ -76,11 +88,14 @@ export type Database = {
           market_cap?: number | null
           name?: string
           net_margin_2024?: number | null
+          pipeline_status?: string | null
+          responsible?: string | null
           risk_factors?: string | null
           score_color?: string | null
           sector?: string
           status?: string | null
           updated_at?: string | null
+          website?: string | null
           yoy_growth_21_22?: number | null
           yoy_growth_22_23?: number | null
           yoy_growth_23_24?: number | null
