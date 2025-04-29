@@ -1,265 +1,38 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-// Tipos
-export type PipelineStatus = 
-  | "prospect" 
-  | "agendado" 
-  | "reunido" 
-  | "diligence" 
-  | "investida";
-
-export type Segment = 
-  | "SaaS" 
-  | "Marketplace" 
-  | "E-commerce" 
-  | "Fintech" 
-  | "Healthtech" 
-  | "Edtech" 
-  | "Outros";
+// Types
+export type CompanyStatus = "approved" | "evaluating" | "not_approved";
+export type ScoreColor = "green" | "orange" | "red";
+export type CashFlow = "positive" | "negative";
 
 export interface Company {
   id: string;
   name: string;
+  sector: string;
+  about?: string | null;
   cnpj: string;
-  revenue: number;
-  profitMargin: number;
-  retention: number;
-  churn: number;
-  cac: number;
-  ltv: number;
-  nps: number;
-  website: string;
-  segment: Segment;
-  status: PipelineStatus;
-  documents: Document[];
-  responsiblePerson?: string; // Novo campo adicionado
-  teamMember?: string;
-  lastContact?: Date;
-  nextMeeting?: Date;
+  market_cap?: number | null;
+  annual_revenue_2024?: number | null;
+  net_margin_2024?: number | null;
+  ebitda_2023?: number | null;
+  ebitda_2024?: number | null;
+  ebitda_2025?: number | null;
+  yoy_growth_21_22?: number | null;
+  yoy_growth_22_23?: number | null;
+  yoy_growth_23_24?: number | null;
+  risk_factors?: string | null;
+  leverage?: number | null;
+  cash_flow?: CashFlow | null;
+  dividend_distribution?: boolean | null;
+  status?: CompanyStatus | null;
+  final_score?: number | null;
+  score_color?: ScoreColor | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
-export interface Document {
-  id: string;
-  name: string;
-  type: string;
-  url: string;
-  uploadDate: Date;
-}
-
-export interface TeamMember {
-  id: string;
-  name: string;
-  avatar: string;
-  role: string;
-}
-
-// Dados de exemplo
-const teamMembersData: TeamMember[] = [
-  { id: "1", name: "Marcos Silva", avatar: "MS", role: "Sócio Gestor" },
-  { id: "2", name: "Ana Luiza Costa", avatar: "AC", role: "Analista Sênior" },
-  { id: "3", name: "Rafael Oliveira", avatar: "RO", role: "Analista de Investimentos" },
-  { id: "4", name: "Tatiana Santos", avatar: "TS", role: "Diretora de Operações" },
-  { id: "5", name: "João Pedro Mendes", avatar: "JM", role: "Analista Júnior" },
-  { id: "6", name: "Camila Ferreira", avatar: "CF", role: "Sócia" },
-  { id: "7", name: "Bruno Almeida", avatar: "BA", role: "Analista Financeiro" }
-];
-
-// Dados de exemplo para empresas
-const initialCompanies: Company[] = [
-  {
-    id: "1",
-    name: "TechSoft Sistemas",
-    cnpj: "12.345.678/0001-90",
-    revenue: 350000,
-    profitMargin: 32,
-    retention: 87,
-    churn: 13,
-    cac: 1200,
-    ltv: 9600,
-    nps: 72,
-    website: "https://techsoft.exemplo.com.br",
-    segment: "SaaS",
-    status: "investida",
-    documents: [
-      { id: "d1", name: "Contrato", type: "PDF", url: "#", uploadDate: new Date(2023, 5, 12) }
-    ],
-    responsiblePerson: "Marcos Silva",
-    teamMember: "1",
-    lastContact: new Date(2023, 9, 15),
-    nextMeeting: new Date(2023, 10, 5)
-  },
-  {
-    id: "2",
-    name: "Conecta Marketplace",
-    cnpj: "23.456.789/0001-01",
-    revenue: 820000,
-    profitMargin: 18,
-    retention: 74,
-    churn: 26,
-    cac: 950,
-    ltv: 5700,
-    nps: 68,
-    website: "https://conecta.exemplo.com.br",
-    segment: "Marketplace",
-    status: "diligence",
-    documents: [],
-    responsiblePerson: "Ana Luiza Costa",
-    teamMember: "2",
-    lastContact: new Date(2023, 9, 20)
-  },
-  {
-    id: "3",
-    name: "FinGroup",
-    cnpj: "34.567.890/0001-12",
-    revenue: 1250000,
-    profitMargin: 41,
-    retention: 92,
-    churn: 8,
-    cac: 2100,
-    ltv: 18900,
-    nps: 85,
-    website: "https://fingroup.exemplo.com.br",
-    segment: "Fintech",
-    status: "reunido",
-    documents: [
-      { id: "d2", name: "Apresentação", type: "PPTX", url: "#", uploadDate: new Date(2023, 8, 25) }
-    ],
-    responsiblePerson: "Rafael Oliveira",
-    teamMember: "3"
-  },
-  {
-    id: "4",
-    name: "Saúde Digital",
-    cnpj: "45.678.901/0001-23",
-    revenue: 680000,
-    profitMargin: 36,
-    retention: 88,
-    churn: 12,
-    cac: 1500,
-    ltv: 12000,
-    nps: 78,
-    website: "https://saudedigital.exemplo.com.br",
-    segment: "Healthtech",
-    status: "agendado",
-    documents: [],
-    responsiblePerson: "Tatiana Santos",
-    teamMember: "4",
-    nextMeeting: new Date(2023, 10, 8)
-  },
-  {
-    id: "5",
-    name: "EduTech Brasil",
-    cnpj: "56.789.012/0001-34",
-    revenue: 520000,
-    profitMargin: 28,
-    retention: 83,
-    churn: 17,
-    cac: 880,
-    ltv: 7040,
-    nps: 75,
-    website: "https://edutech.exemplo.com.br",
-    segment: "Edtech",
-    status: "prospect",
-    documents: [],
-    responsiblePerson: "João Pedro Mendes",
-    teamMember: "5"
-  },
-  {
-    id: "6",
-    name: "ShopNow E-commerce",
-    cnpj: "67.890.123/0001-45",
-    revenue: 1750000,
-    profitMargin: 22,
-    retention: 72,
-    churn: 28,
-    cac: 650,
-    ltv: 3900,
-    nps: 66,
-    website: "https://shopnow.exemplo.com.br",
-    segment: "E-commerce",
-    status: "prospect",
-    documents: [],
-    responsiblePerson: "Camila Ferreira",
-    teamMember: "6"
-  },
-  {
-    id: "7",
-    name: "Logística Express",
-    cnpj: "78.901.234/0001-56",
-    revenue: 980000,
-    profitMargin: 15,
-    retention: 79,
-    churn: 21,
-    cac: 1100,
-    ltv: 5500,
-    nps: 70,
-    website: "https://logisticaexpress.exemplo.com.br",
-    segment: "Outros",
-    status: "reunido",
-    documents: [],
-    responsiblePerson: "Bruno Almeida",
-    teamMember: "7"
-  },
-  {
-    id: "8",
-    name: "CloudStore",
-    cnpj: "89.012.345/0001-67",
-    revenue: 430000,
-    profitMargin: 38,
-    retention: 91,
-    churn: 9,
-    cac: 1800,
-    ltv: 16200,
-    nps: 82,
-    website: "https://cloudstore.exemplo.com.br",
-    segment: "SaaS",
-    status: "investida",
-    documents: [
-      { id: "d3", name: "Contrato", type: "PDF", url: "#", uploadDate: new Date(2023, 6, 18) }
-    ],
-    responsiblePerson: "Marcos Silva",
-    teamMember: "1"
-  },
-  {
-    id: "9",
-    name: "Investimentos Pro",
-    cnpj: "90.123.456/0001-78",
-    revenue: 2100000,
-    profitMargin: 45,
-    retention: 94,
-    churn: 6,
-    cac: 2500,
-    ltv: 25000,
-    nps: 88,
-    website: "https://investpro.exemplo.com.br",
-    segment: "Fintech",
-    status: "agendado",
-    documents: [],
-    responsiblePerson: "Ana Luiza Costa",
-    teamMember: "2",
-    nextMeeting: new Date(2023, 10, 12)
-  },
-  {
-    id: "10",
-    name: "Construtech Soluções",
-    cnpj: "01.234.567/0001-89",
-    revenue: 1450000,
-    profitMargin: 25,
-    retention: 81,
-    churn: 19,
-    cac: 1350,
-    ltv: 8100,
-    nps: 73,
-    website: "https://construtech.exemplo.com.br",
-    segment: "Outros",
-    status: "prospect",
-    documents: [],
-    responsiblePerson: "Rafael Oliveira",
-    teamMember: "3"
-  }
-];
-
-// Mock de eventos para o calendário
+// Calendar event type
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -270,6 +43,26 @@ export interface CalendarEvent {
   type: "meeting" | "deadline" | "follow-up" | "other";
 }
 
+// Team member type
+export interface TeamMember {
+  id: string;
+  name: string;
+  avatar: string;
+  role: string;
+}
+
+// Example team members data
+const teamMembersData: TeamMember[] = [
+  { id: "1", name: "Marcos Silva", avatar: "MS", role: "Sócio Gestor" },
+  { id: "2", name: "Ana Luiza Costa", avatar: "AC", role: "Analista Sênior" },
+  { id: "3", name: "Rafael Oliveira", avatar: "RO", role: "Analista de Investimentos" },
+  { id: "4", name: "Tatiana Santos", avatar: "TS", role: "Diretora de Operações" },
+  { id: "5", name: "João Pedro Mendes", avatar: "JM", role: "Analista Júnior" },
+  { id: "6", name: "Camila Ferreira", avatar: "CF", role: "Sócia" },
+  { id: "7", name: "Bruno Almeida", avatar: "BA", role: "Analista Financeiro" }
+];
+
+// Mock events for calendar
 const todayDate = new Date();
 const nextWeek = new Date(todayDate);
 nextWeek.setDate(todayDate.getDate() + 7);
@@ -322,121 +115,290 @@ const initialEvents: CalendarEvent[] = [
   }
 ];
 
-// Interface do contexto
+// Score calculation function
+export const calculateCompanyScore = (company: Company): { finalScore: number; scoreColor: ScoreColor } => {
+  // Initialize weights
+  let ebitdaWeight = 0.35;
+  let growthWeight = 0.30;
+  let revenueWeight = 0.20;
+  let leverageWeight = 0.15;
+  
+  let totalWeight = 0;
+  let scoreSum = 0;
+  
+  // Calculate EBITDA score (35%)
+  if (company.ebitda_2023 !== undefined && company.ebitda_2023 !== null && 
+      company.ebitda_2024 !== undefined && company.ebitda_2024 !== null && 
+      company.ebitda_2025 !== undefined && company.ebitda_2025 !== null) {
+    
+    const ebitdaAvg = (company.ebitda_2023 + company.ebitda_2024 + company.ebitda_2025) / 3;
+    let ebitdaScore = 0;
+    
+    if (ebitdaAvg > 13) {
+      ebitdaScore = 1;
+    } else if (ebitdaAvg >= 5 && ebitdaAvg <= 13) {
+      ebitdaScore = 0.5;
+    }
+    
+    scoreSum += ebitdaScore * ebitdaWeight;
+    totalWeight += ebitdaWeight;
+  }
+  
+  // Calculate YoY Growth score (30%)
+  if (company.yoy_growth_21_22 !== undefined && company.yoy_growth_21_22 !== null && 
+      company.yoy_growth_22_23 !== undefined && company.yoy_growth_22_23 !== null && 
+      company.yoy_growth_23_24 !== undefined && company.yoy_growth_23_24 !== null) {
+    
+    const growthAvg = (company.yoy_growth_21_22 + company.yoy_growth_22_23 + company.yoy_growth_23_24) / 3;
+    let growthScore = 0;
+    
+    if (growthAvg > 16) {
+      growthScore = 1;
+    } else if (growthAvg >= 1 && growthAvg <= 16) {
+      growthScore = 0.5;
+    }
+    
+    scoreSum += growthScore * growthWeight;
+    totalWeight += growthWeight;
+  }
+  
+  // Calculate Revenue score (20%)
+  if (company.annual_revenue_2024 !== undefined && company.annual_revenue_2024 !== null) {
+    let revenueScore = 0;
+    
+    if (company.annual_revenue_2024 > 100000000) { // 100 million
+      revenueScore = 1;
+    } else if (company.annual_revenue_2024 >= 50000000 && company.annual_revenue_2024 <= 100000000) { // 50-100 million
+      revenueScore = 0.5;
+    }
+    
+    scoreSum += revenueScore * revenueWeight;
+    totalWeight += revenueWeight;
+  }
+  
+  // Calculate Leverage score (15%)
+  if (company.leverage !== undefined && company.leverage !== null) {
+    let leverageScore = 0;
+    
+    if (company.leverage < 50) {
+      leverageScore = 1;
+    } else if (company.leverage >= 50 && company.leverage <= 100) {
+      leverageScore = 0.5;
+    }
+    
+    scoreSum += leverageScore * leverageWeight;
+    totalWeight += leverageWeight;
+  }
+  
+  // Normalize score if not all criteria are present
+  let finalScore = 0;
+  if (totalWeight > 0) {
+    finalScore = (scoreSum / totalWeight) * 10; // Scale to 0-10
+  }
+  
+  // Determine score color
+  let scoreColor: ScoreColor = "red";
+  if (finalScore >= 7.5) {
+    scoreColor = "green";
+  } else if (finalScore >= 5) {
+    scoreColor = "orange";
+  }
+  
+  return { finalScore, scoreColor };
+};
+
+// Context interface
 interface CompanyContextType {
   companies: Company[];
   events: CalendarEvent[];
   teamMembers: TeamMember[];
-  addCompany: (company: Omit<Company, "id" | "documents">) => void;
-  updateCompany: (id: string, company: Partial<Company>) => void;
-  deleteCompany: (id: string) => void;
+  loadCompanies: () => Promise<void>;
+  addCompany: (company: Omit<Company, "id" | "created_at" | "updated_at" | "final_score" | "score_color">) => Promise<void>;
+  updateCompany: (id: string, company: Partial<Company>) => Promise<void>;
+  deleteCompany: (id: string) => Promise<void>;
   getCompanyById: (id: string) => Company | undefined;
-  addDocument: (companyId: string, document: Omit<Document, "id" | "uploadDate">) => void;
   addEvent: (event: Omit<CalendarEvent, "id">) => void;
   updateEvent: (id: string, event: Partial<CalendarEvent>) => void;
   deleteEvent: (id: string) => void;
-  filterCompaniesByStatus: (status: PipelineStatus) => Company[];
-  filterCompaniesByTeamMember: (teamMemberId: string) => Company[];
+  filterCompaniesByStatus: (status: CompanyStatus) => Company[];
+  isLoading: boolean;
 }
 
-// Criar contexto
+// Create context
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
 // Provider
 export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [companies, setCompanies] = useState<Company[]>(initialCompanies);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Adicionar empresa
-  const addCompany = (company: Omit<Company, "id" | "documents">) => {
-    const newCompany: Company = {
-      ...company,
-      id: Date.now().toString(),
-      documents: []
-    };
-    setCompanies((prev) => [...prev, newCompany]);
+  // Load companies from Supabase
+  const loadCompanies = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*');
+      
+      if (error) throw error;
+      
+      if (data) {
+        setCompanies(data as Company[]);
+      }
+    } catch (error) {
+      console.error('Error loading companies:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Atualizar empresa
-  const updateCompany = (id: string, company: Partial<Company>) => {
-    setCompanies((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...company } : c))
-    );
+  // Load data on mount
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  // Add company
+  const addCompany = async (company: Omit<Company, "id" | "created_at" | "updated_at" | "final_score" | "score_color">) => {
+    try {
+      // Calculate score
+      const { finalScore, scoreColor } = calculateCompanyScore(company as Company);
+      
+      // Insert into Supabase
+      const { data, error } = await supabase
+        .from('companies')
+        .insert([{ 
+          ...company, 
+          final_score: finalScore,
+          score_color: scoreColor
+        }])
+        .select();
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setCompanies(prev => [...prev, data[0] as Company]);
+        return data[0];
+      }
+    } catch (error) {
+      console.error('Error adding company:', error);
+    }
   };
 
-  // Excluir empresa
-  const deleteCompany = (id: string) => {
-    setCompanies((prev) => prev.filter((company) => company.id !== id));
+  // Update company
+  const updateCompany = async (id: string, companyData: Partial<Company>) => {
+    try {
+      // Get current company data
+      const currentCompany = companies.find(c => c.id === id);
+      if (!currentCompany) return;
+      
+      // Merge current and new data
+      const updatedCompany = { ...currentCompany, ...companyData };
+      
+      // Recalculate score if relevant fields changed
+      const scoreFields = [
+        'ebitda_2023', 'ebitda_2024', 'ebitda_2025',
+        'yoy_growth_21_22', 'yoy_growth_22_23', 'yoy_growth_23_24',
+        'annual_revenue_2024', 'leverage'
+      ];
+      
+      let finalScore = updatedCompany.final_score;
+      let scoreColor = updatedCompany.score_color;
+      
+      const shouldRecalculate = scoreFields.some(field => 
+        field in companyData && companyData[field as keyof typeof companyData] !== currentCompany[field as keyof typeof currentCompany]
+      );
+      
+      if (shouldRecalculate) {
+        const result = calculateCompanyScore(updatedCompany);
+        finalScore = result.finalScore;
+        scoreColor = result.scoreColor;
+      }
+      
+      // Update in Supabase
+      const { data, error } = await supabase
+        .from('companies')
+        .update({
+          ...companyData,
+          final_score: finalScore,
+          score_color: scoreColor
+        })
+        .eq('id', id)
+        .select();
+      
+      if (error) throw error;
+      
+      // Update local state
+      if (data) {
+        setCompanies(prev => prev.map(c => c.id === id ? { ...c, ...data[0] } as Company : c));
+      }
+    } catch (error) {
+      console.error('Error updating company:', error);
+    }
   };
 
-  // Obter empresa por ID
+  // Delete company
+  const deleteCompany = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setCompanies(prev => prev.filter(company => company.id !== id));
+    } catch (error) {
+      console.error('Error deleting company:', error);
+    }
+  };
+
+  // Get company by ID
   const getCompanyById = (id: string) => {
-    return companies.find((company) => company.id === id);
+    return companies.find(company => company.id === id);
   };
 
-  // Adicionar documento a uma empresa
-  const addDocument = (companyId: string, document: Omit<Document, "id" | "uploadDate">) => {
-    const newDocument: Document = {
-      ...document,
-      id: Date.now().toString(),
-      uploadDate: new Date()
-    };
-
-    setCompanies((prev) =>
-      prev.map((company) =>
-        company.id === companyId
-          ? { ...company, documents: [...company.documents, newDocument] }
-          : company
-      )
-    );
-  };
-
-  // Adicionar evento ao calendário
+  // Add event
   const addEvent = (event: Omit<CalendarEvent, "id">) => {
     const newEvent: CalendarEvent = {
       ...event,
       id: Date.now().toString()
     };
-    setEvents((prev) => [...prev, newEvent]);
+    setEvents(prev => [...prev, newEvent]);
   };
 
-  // Atualizar evento
+  // Update event
   const updateEvent = (id: string, event: Partial<CalendarEvent>) => {
-    setEvents((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, ...event } : e))
+    setEvents(prev =>
+      prev.map(e => (e.id === id ? { ...e, ...event } : e))
     );
   };
 
-  // Excluir evento
+  // Delete event
   const deleteEvent = (id: string) => {
-    setEvents((prev) => prev.filter((event) => event.id !== id));
+    setEvents(prev => prev.filter(event => event.id !== id));
   };
 
-  // Filtrar empresas por status
-  const filterCompaniesByStatus = (status: PipelineStatus) => {
-    return companies.filter((company) => company.status === status);
+  // Filter companies by status
+  const filterCompaniesByStatus = (status: CompanyStatus) => {
+    return companies.filter(company => company.status === status);
   };
 
-  // Filtrar empresas por membro da equipe
-  const filterCompaniesByTeamMember = (teamMemberId: string) => {
-    return companies.filter((company) => company.teamMember === teamMemberId);
-  };
-
-  // Valor do contexto
+  // Context value
   const value = {
     companies,
     events,
     teamMembers: teamMembersData,
+    loadCompanies,
     addCompany,
     updateCompany,
     deleteCompany,
     getCompanyById,
-    addDocument,
     addEvent,
     updateEvent,
     deleteEvent,
     filterCompaniesByStatus,
-    filterCompaniesByTeamMember
+    isLoading
   };
 
   return (
@@ -444,7 +406,7 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
   );
 };
 
-// Hook personalizado para usar o contexto
+// Custom hook
 export const useCompany = () => {
   const context = useContext(CompanyContext);
   if (context === undefined) {

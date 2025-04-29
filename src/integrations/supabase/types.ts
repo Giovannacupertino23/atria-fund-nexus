@@ -11,95 +11,81 @@ export type Database = {
     Tables: {
       companies: {
         Row: {
-          cac: number
-          churn: number
+          about: string | null
+          annual_revenue_2024: number | null
+          cash_flow: string | null
           cnpj: string
           created_at: string | null
+          dividend_distribution: boolean | null
+          ebitda_2023: number | null
+          ebitda_2024: number | null
+          ebitda_2025: number | null
+          final_score: number | null
           id: string
-          ltv: number
+          leverage: number | null
+          market_cap: number | null
           name: string
-          nps: number
-          profit_margin: number
-          responsible_person: string | null
-          retention: number
-          revenue: number
-          segment: string
-          status: string
+          net_margin_2024: number | null
+          risk_factors: string | null
+          score_color: string | null
+          sector: string
+          status: string | null
           updated_at: string | null
-          website: string | null
+          yoy_growth_21_22: number | null
+          yoy_growth_22_23: number | null
+          yoy_growth_23_24: number | null
         }
         Insert: {
-          cac?: number
-          churn?: number
+          about?: string | null
+          annual_revenue_2024?: number | null
+          cash_flow?: string | null
           cnpj: string
           created_at?: string | null
+          dividend_distribution?: boolean | null
+          ebitda_2023?: number | null
+          ebitda_2024?: number | null
+          ebitda_2025?: number | null
+          final_score?: number | null
           id?: string
-          ltv?: number
+          leverage?: number | null
+          market_cap?: number | null
           name: string
-          nps?: number
-          profit_margin?: number
-          responsible_person?: string | null
-          retention?: number
-          revenue?: number
-          segment: string
-          status: string
+          net_margin_2024?: number | null
+          risk_factors?: string | null
+          score_color?: string | null
+          sector: string
+          status?: string | null
           updated_at?: string | null
-          website?: string | null
+          yoy_growth_21_22?: number | null
+          yoy_growth_22_23?: number | null
+          yoy_growth_23_24?: number | null
         }
         Update: {
-          cac?: number
-          churn?: number
+          about?: string | null
+          annual_revenue_2024?: number | null
+          cash_flow?: string | null
           cnpj?: string
           created_at?: string | null
+          dividend_distribution?: boolean | null
+          ebitda_2023?: number | null
+          ebitda_2024?: number | null
+          ebitda_2025?: number | null
+          final_score?: number | null
           id?: string
-          ltv?: number
+          leverage?: number | null
+          market_cap?: number | null
           name?: string
-          nps?: number
-          profit_margin?: number
-          responsible_person?: string | null
-          retention?: number
-          revenue?: number
-          segment?: string
-          status?: string
+          net_margin_2024?: number | null
+          risk_factors?: string | null
+          score_color?: string | null
+          sector?: string
+          status?: string | null
           updated_at?: string | null
-          website?: string | null
+          yoy_growth_21_22?: number | null
+          yoy_growth_22_23?: number | null
+          yoy_growth_23_24?: number | null
         }
         Relationships: []
-      }
-      documents: {
-        Row: {
-          company_id: string
-          id: string
-          name: string
-          type: string
-          upload_date: string | null
-          url: string
-        }
-        Insert: {
-          company_id: string
-          id?: string
-          name: string
-          type: string
-          upload_date?: string | null
-          url: string
-        }
-        Update: {
-          company_id?: string
-          id?: string
-          name?: string
-          type?: string
-          upload_date?: string | null
-          url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "documents_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
