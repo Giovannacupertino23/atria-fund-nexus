@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCompany, Company } from "@/context/CompanyContext";
@@ -22,6 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import CompanyForm from "@/components/forms/CompanyForm";
+import DataCard from "@/components/ui/DataCard";
 
 const Companies = () => {
   const { companies, deleteCompany, loadCompanies, isLoading } = useCompany();
@@ -96,6 +96,17 @@ const Companies = () => {
     }
   };
 
+  const getPipelineStatusLabel = (status: string | null | undefined) => {
+    switch (status) {
+      case "prospect": return "Prospect";
+      case "meeting_scheduled": return "Reunião Agendada";
+      case "meeting_done": return "Reunião Feita";
+      case "due_diligence": return "Due Diligence";
+      case "invested": return "Investida";
+      default: return "Não definido";
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -153,9 +164,8 @@ const Companies = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nome</TableHead>
-                        <TableHead>Setor</TableHead>
-                        <TableHead>CNPJ</TableHead>
-                        <TableHead>Faturamento 2024</TableHead>
+                        <TableHead>Responsável</TableHead>
+                        <TableHead>Pipeline</TableHead>
                         <TableHead>Nota</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Ações</TableHead>
@@ -164,7 +174,7 @@ const Companies = () => {
                     <TableBody>
                       {filteredCompanies.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                          <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                             Nenhuma empresa cadastrada.
                           </TableCell>
                         </TableRow>
@@ -182,13 +192,10 @@ const Companies = () => {
                               {company.name}
                             </TableCell>
                             <TableCell onClick={() => navigate(`/company/${company.id}`)}>
-                              {company.sector}
+                              {company.responsible || "Não definido"}
                             </TableCell>
                             <TableCell onClick={() => navigate(`/company/${company.id}`)}>
-                              {company.cnpj}
-                            </TableCell>
-                            <TableCell onClick={() => navigate(`/company/${company.id}`)}>
-                              {formatCurrency(company.annual_revenue_2024)}
+                              {getPipelineStatusLabel(company.pipeline_status)}
                             </TableCell>
                             <TableCell onClick={() => navigate(`/company/${company.id}`)}>
                               {company.final_score !== null && company.final_score !== undefined
@@ -228,54 +235,29 @@ const Companies = () => {
                     </div>
                   ) : (
                     filteredCompanies.map((company) => (
-                      <Card 
-                        key={company.id} 
-                        className="relative hover:shadow-md transition-shadow"
-                      >
+                      <div key={company.id} className="relative" onClick={() => navigate(`/company/${company.id}`)}>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute top-2 right-2 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                          onClick={(e) => handleDeleteClick(e, company.id)}
+                          className="absolute top-2 right-2 z-10 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(e, company.id);
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                        <CardHeader className="pb-2" onClick={() => navigate(`/company/${company.id}`)}>
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-1 flex items-center">
-                              <div className={`w-3 h-3 rounded-full mr-2 ${getScoreColor(company.score_color)}`}></div>
-                              <CardTitle className="text-lg">{company.name}</CardTitle>
-                            </div>
-                            <span className={`
-                              px-2.5 py-0.5 rounded-full text-xs font-medium 
-                              ${getStatusColor(company.status)}
-                            `}>
-                              {getStatusLabel(company.status)}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">{company.cnpj}</p>
-                        </CardHeader>
-                        <CardContent onClick={() => navigate(`/company/${company.id}`)}>
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground">Setor:</span>
-                              <span>{company.sector}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground">Faturamento 2024:</span>
-                              <span>{formatCurrency(company.annual_revenue_2024)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground">Nota Final:</span>
-                              <span className="font-medium">
-                                {company.final_score !== null && company.final_score !== undefined
-                                  ? company.final_score.toFixed(1)
-                                  : "N/A"}
-                              </span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        <DataCard
+                          title={company.name}
+                          value={company.name}
+                          responsible={company.responsible || undefined}
+                          pipelineStatus={company.pipeline_status || undefined}
+                          finalScore={company.final_score}
+                          scoreColor={company.score_color as "green" | "orange" | "red" | null}
+                          status={company.status || undefined}
+                          className="cursor-pointer hover:shadow-md transition-shadow h-full"
+                        />
+                      </div>
                     ))
                   )}
                 </div>
