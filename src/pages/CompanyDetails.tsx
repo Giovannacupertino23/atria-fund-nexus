@@ -21,6 +21,14 @@ import {
 import DataCard from "@/components/ui/DataCard";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import CompanyEditForm from "@/components/forms/CompanyEditForm";
 
 const CompanyDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +37,7 @@ const CompanyDetails = () => {
   const { toast } = useToast();
   const [retryCount, setRetryCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   useEffect(() => {
     const loadData = async () => {
@@ -50,6 +59,14 @@ const CompanyDetails = () => {
     toast({
       title: "Tentando novamente",
       description: "Tentando carregar os dados da empresa novamente..."
+    });
+  };
+
+  const handleEditComplete = () => {
+    setIsEditDialogOpen(false);
+    toast({
+      title: "Empresa atualizada",
+      description: "Os dados foram atualizados com sucesso."
     });
   };
   
@@ -170,12 +187,33 @@ const CompanyDetails = () => {
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(company.status)}`}>
             {getStatusLabel(company.status)}
           </span>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setIsEditDialogOpen(true)}
+          >
             <Edit className="h-4 w-4 mr-2" />
             Editar
           </Button>
         </div>
       </div>
+
+      {/* Modal de Edição */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Empresa: {company.name}</DialogTitle>
+            <DialogDescription>
+              Atualize as informações da empresa. Clique em salvar quando terminar.
+            </DialogDescription>
+          </DialogHeader>
+          <CompanyEditForm 
+            company={company} 
+            onSuccess={handleEditComplete}
+            onCancel={() => setIsEditDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Score Card */}
