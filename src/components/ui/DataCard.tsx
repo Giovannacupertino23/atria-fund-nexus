@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 interface DataCardProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;

@@ -1,6 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 // Types
 export type CompanyStatus = "approved" | "evaluating" | "not_approved";
@@ -239,22 +239,34 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [companies, setCompanies] = useState<Company[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   // Load companies from Supabase
   const loadCompanies = async () => {
     setIsLoading(true);
     try {
+      console.log("Carregando empresas do Supabase...");
       const { data, error } = await supabase
         .from('companies')
         .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao carregar empresas (detalhado):', error);
+        throw error;
+      }
+      
+      console.log("Dados retornados do Supabase:", data);
       
       if (data) {
         setCompanies(data as Company[]);
       }
     } catch (error) {
-      console.error('Error loading companies:', error);
+      console.error('Erro ao carregar empresas:', error);
+      toast({
+        title: "Erro ao carregar empresas",
+        description: "Não foi possível conectar ao banco de dados. Tente novamente mais tarde.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -268,8 +280,12 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
   // Add company
   const addCompany = async (company: Omit<Company, "id" | "created_at" | "updated_at" | "final_score" | "score_color">) => {
     try {
+      console.log("Adicionando empresa ao Supabase:", company);
+      
       // Calculate score
       const { finalScore, scoreColor } = calculateCompanyScore(company as Company);
+      
+      console.log("Score calculado:", { finalScore, scoreColor });
       
       // Insert into Supabase
       const { data, error } = await supabase
@@ -281,16 +297,32 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
         }])
         .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao adicionar empresa (detalhado):', error);
+        toast({
+          title: "Erro ao cadastrar",
+          description: `Ocorreu um erro ao cadastrar a empresa: ${error.message}`,
+          variant: "destructive"
+        });
+        throw error;
+      }
+      
+      console.log("Resposta do Supabase após inserção:", data);
       
       if (data && data.length > 0) {
         const newCompany = data[0] as Company;
         setCompanies(prev => [...prev, newCompany]);
+        
+        toast({
+          title: "Empresa cadastrada",
+          description: "A empresa foi cadastrada com sucesso no banco de dados."
+        });
+        
         return newCompany;
       }
       return undefined;
     } catch (error) {
-      console.error('Error adding company:', error);
+      console.error('Erro ao adicionar empresa:', error);
       return undefined;
     }
   };

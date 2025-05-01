@@ -1,11 +1,11 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Loader2 } from "lucide-react";
 import { useCompany, Company, PipelineStatus } from "@/context/CompanyContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +21,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ onSuccess, onCancel }) => {
   const { addCompany } = useCompany();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<CompanyFormValues>({
     defaultValues: {
@@ -52,24 +53,64 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ onSuccess, onCancel }) => {
   
   const onSubmit = async (values: CompanyFormValues) => {
     try {
-      const result = await addCompany(values);
+      setIsSubmitting(true);
+      console.log("Enviando dados do formulário:", values);
       
-      toast({
-        title: "Empresa cadastrada",
-        description: "A empresa foi cadastrada com sucesso."
-      });
+      // Certifique-se de que os campos numéricos são do tipo correto
+      const formattedValues = {
+        ...values,
+        cac: values.cac !== undefined ? Number(values.cac) : undefined,
+        average_ticket: values.average_ticket !== undefined ? Number(values.average_ticket) : undefined,
+        market_cap: values.market_cap !== undefined ? Number(values.market_cap) : undefined,
+        annual_revenue_2024: values.annual_revenue_2024 !== undefined ? Number(values.annual_revenue_2024) : undefined,
+        net_margin_2024: values.net_margin_2024 !== undefined ? Number(values.net_margin_2024) : undefined,
+        ebitda_2023: values.ebitda_2023 !== undefined ? Number(values.ebitda_2023) : undefined,
+        ebitda_2024: values.ebitda_2024 !== undefined ? Number(values.ebitda_2024) : undefined,
+        ebitda_2025: values.ebitda_2025 !== undefined ? Number(values.ebitda_2025) : undefined,
+        yoy_growth_21_22: values.yoy_growth_21_22 !== undefined ? Number(values.yoy_growth_21_22) : undefined,
+        yoy_growth_22_23: values.yoy_growth_22_23 !== undefined ? Number(values.yoy_growth_22_23) : undefined,
+        yoy_growth_23_24: values.yoy_growth_23_24 !== undefined ? Number(values.yoy_growth_23_24) : undefined,
+        leverage: values.leverage !== undefined ? Number(values.leverage) : undefined
+      };
       
-      if (onSuccess) {
-        onSuccess();
-      } else if (result) {
-        navigate(`/company/${result.id}`);
+      console.log("Valores formatados:", formattedValues);
+      
+      const result = await addCompany(formattedValues);
+      
+      if (result) {
+        console.log("Empresa cadastrada com sucesso:", result);
+        
+        toast({
+          title: "Empresa cadastrada",
+          description: "A empresa foi cadastrada com sucesso."
+        });
+        
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          navigate(`/company/${result.id}`);
+        }
+      } else {
+        // Se result for undefined mas não houve erro capturado
+        toast({
+          title: "Aviso",
+          description: "A empresa foi processada, mas não foi possível obter confirmação completa.",
+          variant: "default"
+        });
+        
+        if (onSuccess) {
+          onSuccess();
+        }
       }
     } catch (error) {
+      console.error("Erro ao cadastrar empresa:", error);
       toast({
         title: "Erro ao cadastrar",
-        description: "Ocorreu um erro ao cadastrar a empresa.",
+        description: "Ocorreu um erro ao cadastrar a empresa. Verifique os dados e tente novamente.",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -549,8 +590,19 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ onSuccess, onCancel }) => {
               Cancelar
             </Button>
           )}
-          <Button type="submit" className="bg-atria-red hover:bg-atria-red/90">
-            Cadastrar Empresa
+          <Button 
+            type="submit" 
+            className="bg-atria-red hover:bg-atria-red/90"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processando...
+              </>
+            ) : (
+              "Cadastrar Empresa"
+            )}
           </Button>
         </div>
       </form>
