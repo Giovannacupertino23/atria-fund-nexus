@@ -18,7 +18,7 @@ export const supabase = createClient<Database>(
       autoRefreshToken: true,
     },
     global: {
-      fetch: (url: RequestInfo | URL, options?: RequestInit) => fetch(url, options)
+      fetch: (url, options) => fetch(url, options)
     },
     db: {
       schema: 'public'

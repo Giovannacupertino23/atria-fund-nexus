@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCompany } from "@/context/CompanyContext";
@@ -26,28 +25,35 @@ import { useToast } from "@/hooks/use-toast";
 const CompanyDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getCompanyById, loadCompanies, isLoading, companyLoadError, loadingCompanyId } = useCompany();
+  const { getCompanyById, loadCompanies, isLoading, companyLoadError, loadingCompanyId, companies } = useCompany();
   const { toast } = useToast();
   const [retryCount, setRetryCount] = useState(0);
+  const [localLoading, setLocalLoading] = useState(true);
   
   useEffect(() => {
-    if (id) {
-      // Attempt to load companies if we haven't already or if there was an error
-      loadCompanies();
-    }
-  }, [id, loadCompanies, retryCount]);
+    const loadData = async () => {
+      if (id && companies.length === 0) {
+        console.log("Carregando dados da empresa:", id);
+        await loadCompanies();
+      }
+      setLocalLoading(false);
+    };
+    
+    loadData();
+  }, [id, loadCompanies, companies.length, retryCount]);
   
-  const company = getCompanyById(id || "");
+  const company = id ? getCompanyById(id) : undefined;
   
   const handleRetry = () => {
     setRetryCount(prev => prev + 1);
+    setLocalLoading(true);
     toast({
       title: "Tentando novamente",
       description: "Tentando carregar os dados da empresa novamente..."
     });
   };
   
-  if (isLoading || loadingCompanyId === id) {
+  if (isLoading || localLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh]">
         <Loader2 className="h-10 w-10 animate-spin text-atria-red mb-4" />

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -250,7 +249,7 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
   // Load companies from Supabase
   const loadCompanies = useCallback(async () => {
     // Skip if we're already loading
-    if (isLoading && !loadingCompanyId) return;
+    if (isLoading) return;
     
     setIsLoading(true);
     setCompanyLoadError(false);
@@ -288,7 +287,7 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
       setLoadingCompanyId(null);
       setIsInitialized(true);
     }
-  }, [toast, isLoading, loadingCompanyId]);
+  }, [toast]);
 
   // Load data on mount only once
   useEffect(() => {
@@ -426,15 +425,17 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   // Get company by ID
-  const getCompanyById = (id: string) => {
-    // Check if we need to load a specific company
-    if (id && companies.length === 0 && !isLoading && !loadingCompanyId) {
-      setLoadingCompanyId(id);
+  const getCompanyById = useCallback((id: string) => {
+    // Immediately return the company if it exists in the current state
+    const foundCompany = companies.find(company => company.id === id);
+    
+    // If company is not found and we need to load companies (and aren't already loading)
+    if (!foundCompany && companies.length === 0 && !isLoading && !loadingCompanyId) {
       loadCompanies();
     }
     
-    return companies.find(company => company.id === id);
-  };
+    return foundCompany;
+  }, [companies, isLoading, loadingCompanyId, loadCompanies]);
 
   // Add event
   const addEvent = (event: Omit<CalendarEvent, "id">) => {
