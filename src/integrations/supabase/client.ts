@@ -16,6 +16,12 @@ export const supabase = createClient<Database>(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
+    },
+    global: {
+      fetch: (...args) => fetch(...args)
+    },
+    db: {
+      schema: 'public'
     }
   }
 );

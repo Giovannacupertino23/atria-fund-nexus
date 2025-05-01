@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -238,11 +239,15 @@ const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
 
   // Load companies from Supabase
-  const loadCompanies = async () => {
+  const loadCompanies = useCallback(async () => {
+    // Skip if we're already loading
+    if (isLoading) return;
+    
     setIsLoading(true);
     try {
       console.log("Carregando empresas do Supabase...");
@@ -259,6 +264,8 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
       
       if (data) {
         setCompanies(data as Company[]);
+      } else {
+        setCompanies([]);
       }
     } catch (error) {
       console.error('Erro ao carregar empresas:', error);
@@ -267,15 +274,20 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
         description: "Não foi possível conectar ao banco de dados. Tente novamente mais tarde.",
         variant: "destructive"
       });
+      // Set empty array to prevent endless loading state
+      setCompanies([]);
     } finally {
       setIsLoading(false);
+      setIsInitialized(true);
     }
-  };
+  }, [toast, isLoading]);
 
-  // Load data on mount
+  // Load data on mount only once
   useEffect(() => {
-    loadCompanies();
-  }, []);
+    if (!isInitialized) {
+      loadCompanies();
+    }
+  }, [isInitialized, loadCompanies]);
 
   // Add company
   const addCompany = async (company: Omit<Company, "id" | "created_at" | "updated_at" | "final_score" | "score_color">) => {
