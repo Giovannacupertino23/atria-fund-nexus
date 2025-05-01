@@ -230,6 +230,8 @@ interface CompanyContextType {
   deleteEvent: (id: string) => void;
   filterCompaniesByStatus: (status: CompanyStatus) => Company[];
   isLoading: boolean;
+  companyLoadError: boolean;
+  loadingCompanyId: string | null;
 }
 
 // Create context
@@ -241,14 +243,17 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [companyLoadError, setCompanyLoadError] = useState(false);
+  const [loadingCompanyId, setLoadingCompanyId] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Load companies from Supabase
   const loadCompanies = useCallback(async () => {
     // Skip if we're already loading
-    if (isLoading) return;
+    if (isLoading && !loadingCompanyId) return;
     
     setIsLoading(true);
+    setCompanyLoadError(false);
     try {
       console.log("Carregando empresas do Supabase...");
       const { data, error } = await supabase
@@ -257,6 +262,7 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
       
       if (error) {
         console.error('Erro ao carregar empresas (detalhado):', error);
+        setCompanyLoadError(true);
         throw error;
       }
       
@@ -269,6 +275,7 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
     } catch (error) {
       console.error('Erro ao carregar empresas:', error);
+      setCompanyLoadError(true);
       toast({
         title: "Erro ao carregar empresas",
         description: "Não foi possível conectar ao banco de dados. Tente novamente mais tarde.",
@@ -278,9 +285,10 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
       setCompanies([]);
     } finally {
       setIsLoading(false);
+      setLoadingCompanyId(null);
       setIsInitialized(true);
     }
-  }, [toast, isLoading]);
+  }, [toast, isLoading, loadingCompanyId]);
 
   // Load data on mount only once
   useEffect(() => {
@@ -402,13 +410,29 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (error) throw error;
       
       setCompanies(prev => prev.filter(company => company.id !== id));
+      
+      toast({
+        title: "Empresa excluída",
+        description: "A empresa foi removida com sucesso."
+      });
     } catch (error) {
       console.error('Error deleting company:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir a empresa. Tente novamente.",
+        variant: "destructive"
+      });
     }
   };
 
   // Get company by ID
   const getCompanyById = (id: string) => {
+    // Check if we need to load a specific company
+    if (id && companies.length === 0 && !isLoading && !loadingCompanyId) {
+      setLoadingCompanyId(id);
+      loadCompanies();
+    }
+    
     return companies.find(company => company.id === id);
   };
 
@@ -452,7 +476,9 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
     updateEvent,
     deleteEvent,
     filterCompaniesByStatus,
-    isLoading
+    isLoading,
+    companyLoadError,
+    loadingCompanyId
   };
 
   return (

@@ -17,22 +17,37 @@ import {
   Edit,
   Info,
   Loader2,
+  RefreshCw
 } from "lucide-react";
 import DataCard from "@/components/ui/DataCard";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 const CompanyDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getCompanyById, isLoading, loadCompanies } = useCompany();
+  const { getCompanyById, loadCompanies, isLoading, companyLoadError, loadingCompanyId } = useCompany();
+  const { toast } = useToast();
+  const [retryCount, setRetryCount] = useState(0);
   
   useEffect(() => {
-    loadCompanies();
-  }, [loadCompanies]);
+    if (id) {
+      // Attempt to load companies if we haven't already or if there was an error
+      loadCompanies();
+    }
+  }, [id, loadCompanies, retryCount]);
   
   const company = getCompanyById(id || "");
   
-  if (isLoading) {
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    toast({
+      title: "Tentando novamente",
+      description: "Tentando carregar os dados da empresa novamente..."
+    });
+  };
+  
+  if (isLoading || loadingCompanyId === id) {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh]">
         <Loader2 className="h-10 w-10 animate-spin text-atria-red mb-4" />
@@ -41,11 +56,33 @@ const CompanyDetails = () => {
     );
   }
   
+  if (companyLoadError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[70vh]">
+        <h1 className="text-2xl font-bold mb-4">Erro ao carregar dados</h1>
+        <p className="text-muted-foreground mb-6">Ocorreu um erro ao tentar carregar as informações da empresa</p>
+        <Button onClick={handleRetry} className="flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Tentar novamente
+        </Button>
+      </div>
+    );
+  }
+  
   if (!company) {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh]">
         <h1 className="text-2xl font-bold mb-4">Empresa não encontrada</h1>
-        <Button onClick={() => navigate("/")}>Voltar para listagem</Button>
+        <p className="text-muted-foreground mb-6">Não foi possível encontrar os dados desta empresa</p>
+        <div className="flex gap-4">
+          <Button onClick={() => navigate("/")} variant="outline">
+            Voltar para listagem
+          </Button>
+          <Button onClick={handleRetry} className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Tentar novamente
+          </Button>
+        </div>
       </div>
     );
   }
