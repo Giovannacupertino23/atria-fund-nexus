@@ -1,8 +1,7 @@
-
 import React, { useState } from "react";
-import { format, startOfWeek, addDays, startOfMonth, endOfMonth, isSameDay, isSameMonth, parse } from "date-fns";
+import { format, startOfWeek, addDays, startOfMonth, endOfMonth, isSameDay, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, FolderOpen, Users, Plus, Trash2, Edit, X } from "lucide-react";
+import { CalendarIcon, ChevronLeft, ChevronRight, FolderOpen, Users, Plus, Trash2, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCompany, CalendarEvent } from "@/context/CompanyContext";
@@ -29,12 +28,13 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 
+// Define the types correctly to match CalendarEvent in CompanyContext.tsx
 type EventFormData = {
   title: string;
   type: "meeting" | "deadline" | "follow-up";
   description: string;
-  start: string;
-  end: string;
+  start: Date;
+  end: Date;
   companyId?: string;
   teamMemberId: string;
 };
@@ -42,8 +42,8 @@ type EventFormData = {
 const Calendar = () => {
   const { events, companies, teamMembers, addEvent, deleteEvent } = useCompany();
   const { toast } = useToast();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedView, setSelectedView] = useState<"month" | "week" | "day">("month");
   const [selectedTeamMember, setSelectedTeamMember] = useState<string | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -53,33 +53,9 @@ const Calendar = () => {
     title: "",
     type: "meeting",
     description: "",
-    start: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-    end: format(addDays(new Date(), 1), "yyyy-MM-dd'T'HH:mm"),
+    start: new Date(),
+    end: addDays(new Date(), 1),
     teamMemberId: teamMembers.length > 0 ? teamMembers[0].id : "",
-  });
-
-  const filteredEvents = events.filter((event) => {
-    // Filter by team member if selected
-    if (selectedTeamMember && event.teamMemberId !== selectedTeamMember) {
-      return false;
-    }
-    
-    // Always apply the date filter
-    if (selectedView === "day" && selectedDate) {
-      return isSameDay(new Date(event.start), selectedDate);
-    } else if (selectedView === "week" && selectedDate) {
-      const weekStart = startOfWeek(selectedDate);
-      const weekEnd = addDays(weekStart, 6);
-      const eventDate = new Date(event.start);
-      return eventDate >= weekStart && eventDate <= weekEnd;
-    } else if (selectedView === "month" && currentDate) {
-      const monthStart = startOfMonth(currentDate);
-      const monthEnd = endOfMonth(currentDate);
-      const eventDate = new Date(event.start);
-      return eventDate >= monthStart && eventDate <= monthEnd;
-    }
-    
-    return true;
   });
 
   // Get event type color
@@ -154,7 +130,12 @@ const Calendar = () => {
   // Event form handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setEventForm(prev => ({ ...prev, [name]: value }));
+    
+    if (name === "start" || name === "end") {
+      setEventForm(prev => ({ ...prev, [name]: new Date(value) }));
+    } else {
+      setEventForm(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -166,8 +147,8 @@ const Calendar = () => {
       title: "",
       type: "meeting",
       description: "",
-      start: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-      end: format(addDays(new Date(), 1), "yyyy-MM-dd'T'HH:mm"),
+      start: new Date(),
+      end: addDays(new Date(), 1),
       teamMemberId: teamMembers.length > 0 ? teamMembers[0].id : "",
       companyId: undefined,
     });
@@ -188,8 +169,8 @@ const Calendar = () => {
       }
 
       // Parse dates
-      const startDate = new Date(eventForm.start);
-      const endDate = new Date(eventForm.end);
+      const startDate = eventForm.start;
+      const endDate = eventForm.end;
 
       // Validate dates
       if (endDate <= startDate) {
@@ -203,7 +184,6 @@ const Calendar = () => {
 
       const newEvent: Omit<CalendarEvent, "id"> = {
         title: eventForm.title,
-        description: eventForm.description || "",
         type: eventForm.type,
         start: startDate.toISOString(),
         end: endDate.toISOString(),
@@ -248,6 +228,31 @@ const Calendar = () => {
       });
     }
   };
+
+  // Filter events by team member and date
+  const filteredEvents = events.filter((event) => {
+    // Filter by team member if selected
+    if (selectedTeamMember && event.teamMemberId !== selectedTeamMember) {
+      return false;
+    }
+    
+    // Always apply the date filter
+    if (selectedView === "day" && selectedDate) {
+      return isSameDay(new Date(event.start), selectedDate);
+    } else if (selectedView === "week" && selectedDate) {
+      const weekStart = startOfWeek(selectedDate);
+      const weekEnd = addDays(weekStart, 6);
+      const eventDate = new Date(event.start);
+      return eventDate >= weekStart && eventDate <= weekEnd;
+    } else if (selectedView === "month" && currentDate) {
+      const monthStart = startOfMonth(currentDate);
+      const monthEnd = endOfMonth(currentDate);
+      const eventDate = new Date(event.start);
+      return eventDate >= monthStart && eventDate <= monthEnd;
+    }
+    
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -417,11 +422,6 @@ const Calendar = () => {
                       <span>Responsável: {getTeamMemberName(event.teamMemberId)}</span>
                     </div>
                   </div>
-                  {event.description && (
-                    <div className="mt-2 text-sm">
-                      <p>{event.description}</p>
-                    </div>
-                  )}
                 </div>
               ))
             )}
@@ -473,7 +473,7 @@ const Calendar = () => {
                       id="start"
                       name="start"
                       type="datetime-local"
-                      value={eventForm.start}
+                      value={format(eventForm.start, "yyyy-MM-dd'T'HH:mm")}
                       onChange={handleInputChange}
                       required
                     />
@@ -484,7 +484,7 @@ const Calendar = () => {
                       id="end"
                       name="end"
                       type="datetime-local"
-                      value={eventForm.end}
+                      value={format(eventForm.end, "yyyy-MM-dd'T'HH:mm")}
                       onChange={handleInputChange}
                       required
                     />
@@ -511,14 +511,14 @@ const Calendar = () => {
                 <div>
                   <Label htmlFor="companyId">Empresa (opcional)</Label>
                   <Select
-                    value={eventForm.companyId || ""}
-                    onValueChange={(value) => handleSelectChange("companyId", value)}
+                    value={eventForm.companyId || "none"}
+                    onValueChange={(value) => handleSelectChange("companyId", value === "none" ? undefined : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma empresa" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhuma</SelectItem>
+                      <SelectItem value="none">Nenhuma</SelectItem>
                       {companies.map((company) => (
                         <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>
                       ))}

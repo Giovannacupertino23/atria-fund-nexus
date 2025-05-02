@@ -189,14 +189,15 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
                   <FormLabel>Responsável</FormLabel>
                   <FormControl>
                     <Select 
-                      value={field.value || ""} 
+                      value={field.value || undefined} 
                       onValueChange={field.onChange}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um responsável" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Selecione um responsável</SelectItem>
+                        {/* Fixed the empty value item with a non-empty default value */}
+                        <SelectItem value="_none">Selecione um responsável</SelectItem>
                         {responsiblesList.map((name) => (
                           <SelectItem key={name} value={name}>
                             {name}
