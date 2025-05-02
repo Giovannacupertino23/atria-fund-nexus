@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Trash2, Loader2 } from "lucide-react";
+import { Search, Plus, Trash2, Loader2, ArrowUp, ArrowDown, Filter } from "lucide-react";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import CompanyForm from "@/components/forms/CompanyForm";
 import DataCard from "@/components/ui/DataCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const Companies = () => {
   const { companies, deleteCompany, isLoading } = useCompany();
@@ -30,15 +31,29 @@ const Companies = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Filter companies based on search term
   const filteredCompanies = companies.filter(
     (company) =>
       company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (company.cnpj && company.cnpj.includes(searchTerm)) ||
       (company.sector && company.sector.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Sort companies based on score if sort direction is set
+  const sortedCompanies = [...filteredCompanies].sort((a, b) => {
+    if (sortDirection === null) return 0;
+    
+    const scoreA = a.final_score ?? -1;
+    const scoreB = b.final_score ?? -1;
+    
+    return sortDirection === 'desc' 
+      ? scoreB - scoreA  // Highest to lowest
+      : scoreA - scoreB; // Lowest to highest
+  });
 
   const handleDeleteClick = (e: React.MouseEvent, companyId: string) => {
     e.stopPropagation();
@@ -56,6 +71,24 @@ const Companies = () => {
       setIsDeleteDialogOpen(false);
       setCompanyToDelete(null);
     }
+  };
+
+  const toggleSortDirection = () => {
+    if (sortDirection === null) setSortDirection('desc');
+    else if (sortDirection === 'desc') setSortDirection('asc');
+    else setSortDirection(null);
+  };
+
+  const getSortIcon = () => {
+    if (sortDirection === 'desc') return <ArrowDown className="h-4 w-4" />;
+    if (sortDirection === 'asc') return <ArrowUp className="h-4 w-4" />;
+    return <Filter className="h-4 w-4" />;
+  };
+
+  const getSortLabel = () => {
+    if (sortDirection === 'desc') return "Nota: Maior para Menor";
+    if (sortDirection === 'asc') return "Nota: Menor para Maior";
+    return "Filtrar por Nota";
   };
 
   const getPipelineStatusLabel = (status: string | null | undefined) => {
@@ -148,14 +181,58 @@ const Companies = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Lista de Empresas</CardTitle>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar empresa..."
-                className="w-full sm:w-[300px] pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2" aria-label="Filtrar por nota">
+                    {getSortIcon()}
+                    <span className="hidden sm:inline">{getSortLabel()}</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48">
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Ordenar por nota</h4>
+                    <div className="flex flex-col gap-2">
+                      <Button 
+                        variant={sortDirection === 'desc' ? 'default' : 'outline'}
+                        size="sm"
+                        className="justify-start"
+                        onClick={() => setSortDirection('desc')}
+                      >
+                        <ArrowDown className="h-4 w-4 mr-2" />
+                        Maior para menor
+                      </Button>
+                      <Button 
+                        variant={sortDirection === 'asc' ? 'default' : 'outline'}
+                        size="sm"
+                        className="justify-start"
+                        onClick={() => setSortDirection('asc')}
+                      >
+                        <ArrowUp className="h-4 w-4 mr-2" />
+                        Menor para maior
+                      </Button>
+                      <Button 
+                        variant={sortDirection === null ? 'default' : 'outline'}
+                        size="sm"
+                        className="justify-start"
+                        onClick={() => setSortDirection(null)}
+                      >
+                        <Filter className="h-4 w-4 mr-2" />
+                        Sem ordenação
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar empresa..."
+                  className="w-full sm:w-[300px] pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -173,7 +250,18 @@ const Companies = () => {
                       <TableHead>Nome</TableHead>
                       <TableHead>Responsável</TableHead>
                       <TableHead>Pipeline</TableHead>
-                      <TableHead>Nota</TableHead>
+                      <TableHead className="cursor-pointer" onClick={toggleSortDirection}>
+                        <div className="flex items-center gap-1">
+                          Nota
+                          {sortDirection && (
+                            sortDirection === 'desc' ? (
+                              <ArrowDown className="h-3 w-3" />
+                            ) : (
+                              <ArrowUp className="h-3 w-3" />
+                            )
+                          )}
+                        </div>
+                      </TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
@@ -181,14 +269,14 @@ const Companies = () => {
                   <TableBody>
                     {isLoading ? (
                       renderSkeletonRows()
-                    ) : filteredCompanies.length === 0 ? (
+                    ) : sortedCompanies.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                           {companies.length === 0 ? "Nenhuma empresa cadastrada." : "Nenhum resultado encontrado."}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredCompanies.map((company) => (
+                      sortedCompanies.map((company) => (
                         <TableRow 
                           key={company.id} 
                           className="cursor-pointer hover:bg-muted/50"
@@ -240,12 +328,12 @@ const Companies = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {isLoading ? (
                   renderSkeletonCards()
-                ) : filteredCompanies.length === 0 ? (
+                ) : sortedCompanies.length === 0 ? (
                   <div className="col-span-full text-center py-12 text-muted-foreground">
                     {companies.length === 0 ? "Nenhuma empresa cadastrada." : "Nenhum resultado encontrado."}
                   </div>
                 ) : (
-                  filteredCompanies.map((company) => (
+                  sortedCompanies.map((company) => (
                     <div key={company.id} className="relative" onClick={() => navigate(`/company/${company.id}`)}>
                       <Button
                         variant="ghost"

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -10,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { format, parse } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, User } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompany, CalendarEvent, TeamMember } from "@/context/CompanyContext";
 import {
@@ -24,6 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface EventFormValues {
   title: string;
@@ -148,10 +148,27 @@ const Calendar = () => {
     return company ? company.name : "";
   };
 
+  // Get team member initials for avatar
+  const getTeamMemberInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  // Get team member details by ID
+  const getTeamMemberDetails = (id: string): TeamMember | undefined => {
+    return teamMembers.find(m => m.id === id);
+  };
+
+  // Format time for input
   const formatTimeForInput = (date: Date) => {
     return format(new Date(date), "HH:mm");
   };
 
+  // Parse time input
   const parseTimeInput = (timeString: string, baseDate: Date) => {
     const [hours, minutes] = timeString.split(':').map(Number);
     const date = new Date(baseDate);
@@ -226,33 +243,46 @@ const Calendar = () => {
               </h3>
               
               {date && eventsByDate[format(date, "yyyy-MM-dd")] ? (
-                eventsByDate[format(date, "yyyy-MM-dd")].map((event) => (
-                  <div 
-                    key={event.id} 
-                    className={`border rounded-md p-3 ${getEventTypeColor(event.type)}`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium">{event.title}</h4>
-                        <p className="text-sm">
-                          {format(new Date(event.start), "HH:mm")} - {format(new Date(event.end), "HH:mm")}
-                        </p>
-                        <p className="text-sm mt-1">Responsável: {getTeamMemberName(event.teamMemberId)}</p>
-                        {event.companyId && (
-                          <p className="text-sm">Empresa: {getCompanyName(event.companyId)}</p>
-                        )}
+                eventsByDate[format(date, "yyyy-MM-dd")].map((event) => {
+                  const teamMember = getTeamMemberDetails(event.teamMemberId);
+                  return (
+                    <div 
+                      key={event.id} 
+                      className={`border rounded-md p-3 ${getEventTypeColor(event.type)}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium">{event.title}</h4>
+                          <p className="text-sm">
+                            {format(new Date(event.start), "HH:mm")} - {format(new Date(event.end), "HH:mm")}
+                          </p>
+                          <div className="flex items-center mt-2 gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarFallback className="text-xs bg-gray-200 text-gray-700">
+                                {teamMember ? getTeamMemberInitials(teamMember.name) : "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="text-sm">
+                              <span className="font-medium">{getTeamMemberName(event.teamMemberId)}</span>
+                              {teamMember && <span className="text-xs text-muted-foreground ml-2">({teamMember.role})</span>}
+                            </div>
+                          </div>
+                          {event.companyId && (
+                            <p className="text-sm mt-1">Empresa: {getCompanyName(event.companyId)}</p>
+                          )}
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8 text-gray-500 hover:text-red-500 hover:bg-red-50"
+                          onClick={() => handleDeleteEvent(event.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="h-8 w-8 text-gray-500 hover:text-red-500 hover:bg-red-50"
-                        onClick={() => handleDeleteEvent(event.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               ) : (
                 <div className="text-center py-8 text-muted-foreground border rounded-md">
                   Nenhum evento para esta data.
@@ -348,7 +378,17 @@ const Calendar = () => {
                       <SelectContent>
                         {teamMembers.map((member) => (
                           <SelectItem key={member.id} value={member.id}>
-                            {member.name}
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarFallback className="text-xs bg-gray-200 text-gray-700">
+                                  {getTeamMemberInitials(member.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <span>{member.name}</span>
+                                <span className="text-xs text-muted-foreground ml-2">({member.role})</span>
+                              </div>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -401,8 +441,7 @@ const Calendar = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {/* Key issue: We need to use a non-empty string for the "no company" value */}
-                        <SelectItem value="_none">Nenhuma empresa</SelectItem>
+                        <SelectItem value="none">Nenhuma empresa</SelectItem>
                         {companies.map((company) => (
                           <SelectItem key={company.id} value={company.id}>
                             {company.name}
