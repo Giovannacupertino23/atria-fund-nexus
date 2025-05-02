@@ -9,11 +9,34 @@ import { Loader2 } from "lucide-react";
 import { useCompany, Company, PipelineStatus } from "@/context/CompanyContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 interface CompanyFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
-type CompanyFormValues = Omit<Company, 'id' | 'created_at' | 'updated_at' | 'final_score' | 'score_color'>;
+
+type CompanyFormValues = Omit<Company, 'id' | 'created_at' | 'updated_at' | 'final_score' | 'score_color'> & {
+  valuation?: number;
+};
+
+// Lista de responsáveis
+const responsiblesList = [
+  "Giovanna Cupertino", 
+  "Giovanna Dangelo", 
+  "Mel Bayde", 
+  "Mauro Soledade", 
+  "Ester Martins", 
+  "Maria Paula", 
+  "Nicolle Aguiar"
+];
+
 const CompanyForm: React.FC<CompanyFormProps> = ({
   onSuccess,
   onCancel
@@ -34,6 +57,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       cnpj: "",
       website: "",
       responsible: "",
+      valuation: undefined,
       cac: undefined,
       average_ticket: undefined,
       market_cap: undefined,
@@ -53,6 +77,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       pipeline_status: "prospect"
     }
   });
+  
   const onSubmit = async (values: CompanyFormValues) => {
     try {
       setIsSubmitting(true);
@@ -61,6 +86,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       // Certifique-se de que os campos numéricos são do tipo correto
       const formattedValues = {
         ...values,
+        valuation: values.valuation !== undefined ? Number(values.valuation) : undefined,
         cac: values.cac !== undefined ? Number(values.cac) : undefined,
         average_ticket: values.average_ticket !== undefined ? Number(values.average_ticket) : undefined,
         market_cap: values.market_cap !== undefined ? Number(values.market_cap) : undefined,
@@ -109,6 +135,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       setIsSubmitting(false);
     }
   };
+  
   return <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-4">
@@ -161,13 +188,28 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
           }) => <FormItem>
                   <FormLabel>Responsável</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome do responsável" {...field} />
+                    <Select 
+                      value={field.value || ""} 
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um responsável" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Selecione um responsável</SelectItem>
+                        {responsiblesList.map((name) => (
+                          <SelectItem key={name} value={name}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField control={form.control} name="cac" render={({
             field: {
               onChange,
@@ -190,6 +232,20 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
             }
           }) => <FormItem>
                   <FormLabel>ARPU (USD)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="0" {...fieldProps} value={value === undefined ? '' : value} onChange={e => onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>} />
+
+            <FormField control={form.control} name="valuation" render={({
+            field: {
+              onChange,
+              value,
+              ...fieldProps
+            }
+          }) => <FormItem>
+                  <FormLabel>Valuation (USD)</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="0" {...fieldProps} value={value === undefined ? '' : value} onChange={e => onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
                   </FormControl>
@@ -453,4 +509,5 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       </form>
     </Form>;
 };
+
 export default CompanyForm;
