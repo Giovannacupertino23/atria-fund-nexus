@@ -193,7 +193,8 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
                         <SelectValue placeholder="Selecione um responsável" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Selecione um responsável</SelectItem>
+                        {/* Fixed: Use a non-empty string for the first SelectItem's value */}
+                        <SelectItem value="_none">Selecione um responsável</SelectItem>
                         {responsiblesList.map((name) => (
                           <SelectItem key={name} value={name}>
                             {name}
@@ -328,7 +329,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
                   <FormLabel>Fluxo de Caixa</FormLabel>
                   <FormControl>
                     <select className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm" value={field.value || ""} onChange={e => field.onChange(e.target.value === "" ? undefined : e.target.value)}>
-                      <option value="">Selecione</option>
+                      <option value="_none">Selecione</option>
                       <option value="positive">Positivo</option>
                       <option value="negative">Negativo</option>
                     </select>

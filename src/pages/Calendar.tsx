@@ -186,16 +186,17 @@ const Calendar = () => {
                 mode="single" 
                 selected={date}
                 onSelect={setDate}
-                className="rounded-md border shadow p-4"
+                className="rounded-md border shadow p-4 pointer-events-auto"
                 components={{
-                  DayContent: ({ day }) => {
-                    const dateKey = format(day, "yyyy-MM-dd");
+                  DayContent: (props) => {
+                    // We need to use the date prop rather than day which doesn't exist
+                    const dateKey = format(props.date, "yyyy-MM-dd");
                     const dayEvents = eventsByDate[dateKey] || [];
                     const hasEvents = dayEvents.length > 0;
                     
                     return (
                       <div className="relative w-full h-full">
-                        <div>{format(day, "d")}</div>
+                        <div>{format(props.date, "d")}</div>
                         {hasEvents && (
                           <div className="absolute bottom-0 left-0 right-0 flex justify-center">
                             <div className="w-1.5 h-1.5 rounded-full bg-atria-red" />
@@ -400,7 +401,8 @@ const Calendar = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhuma empresa</SelectItem>
+                        {/* Key issue: We need to use a non-empty string for the "no company" value */}
+                        <SelectItem value="_none">Nenhuma empresa</SelectItem>
                         {companies.map((company) => (
                           <SelectItem key={company.id} value={company.id}>
                             {company.name}

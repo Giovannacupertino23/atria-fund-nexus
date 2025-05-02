@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
@@ -8,12 +9,32 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import { useCompany, Company } from "@/context/CompanyContext";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 interface CompanyEditFormProps {
   company: Company;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 type CompanyFormValues = Omit<Company, 'id' | 'created_at' | 'updated_at' | 'final_score' | 'score_color'>;
+
+// Lista de responsáveis
+const responsiblesList = [
+  "Giovanna Cupertino", 
+  "Giovanna Dangelo", 
+  "Mel Bayde", 
+  "Mauro Soledade", 
+  "Ester Martins", 
+  "Maria Paula", 
+  "Nicolle Aguiar"
+];
+
 const CompanyEditForm: React.FC<CompanyEditFormProps> = ({
   company,
   onSuccess,
@@ -146,7 +167,22 @@ const CompanyEditForm: React.FC<CompanyEditFormProps> = ({
           }) => <FormItem>
                   <FormLabel>Responsável</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome do responsável" {...field} />
+                    <Select 
+                      value={field.value || ""} 
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um responsável" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none">Selecione um responsável</SelectItem>
+                        {responsiblesList.map((name) => (
+                          <SelectItem key={name} value={name}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>} />
@@ -260,7 +296,7 @@ const CompanyEditForm: React.FC<CompanyEditFormProps> = ({
                   <FormLabel>Fluxo de Caixa</FormLabel>
                   <FormControl>
                     <select className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm" value={field.value || ""} onChange={e => field.onChange(e.target.value === "" ? undefined : e.target.value)}>
-                      <option value="">Selecione</option>
+                      <option value="_none">Selecione</option>
                       <option value="positive">Positivo</option>
                       <option value="negative">Negativo</option>
                     </select>
