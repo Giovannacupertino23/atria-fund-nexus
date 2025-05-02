@@ -35,6 +35,7 @@ export type Database = {
           sector: string
           status: string | null
           updated_at: string | null
+          valuation: number | null
           website: string | null
           yoy_growth_21_22: number | null
           yoy_growth_22_23: number | null
@@ -65,6 +66,7 @@ export type Database = {
           sector: string
           status?: string | null
           updated_at?: string | null
+          valuation?: number | null
           website?: string | null
           yoy_growth_21_22?: number | null
           yoy_growth_22_23?: number | null
@@ -95,6 +97,7 @@ export type Database = {
           sector?: string
           status?: string | null
           updated_at?: string | null
+          valuation?: number | null
           website?: string | null
           yoy_growth_21_22?: number | null
           yoy_growth_22_23?: number | null

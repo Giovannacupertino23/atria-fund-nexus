@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
@@ -41,12 +42,8 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
   onSuccess,
   onCancel
 }) => {
-  const {
-    addCompany
-  } = useCompany();
-  const {
-    toast
-  } = useToast();
+  const { addCompany } = useCompany();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<CompanyFormValues>({
@@ -189,15 +186,14 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
                   <FormLabel>Responsável</FormLabel>
                   <FormControl>
                     <Select 
-                      value={field.value || undefined} 
+                      value={field.value || ""} 
                       onValueChange={field.onChange}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um responsável" />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* Fixed the empty value item with a non-empty default value */}
-                        <SelectItem value="_none">Selecione um responsável</SelectItem>
+                        <SelectItem value="">Selecione um responsável</SelectItem>
                         {responsiblesList.map((name) => (
                           <SelectItem key={name} value={name}>
                             {name}
@@ -366,7 +362,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
               ...fieldProps
             }
           }) => <FormItem>
-                  <FormLabel>EBITDA 2023</FormLabel>
+                  <FormLabel>EBITDA 2024</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="0" {...fieldProps} value={value === undefined ? '' : value} onChange={e => onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
                   </FormControl>
@@ -380,7 +376,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
               ...fieldProps
             }
           }) => <FormItem>
-                  <FormLabel>EBITDA 2024</FormLabel>
+                  <FormLabel>EBITDA 2025</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="0" {...fieldProps} value={value === undefined ? '' : value} onChange={e => onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
                   </FormControl>
