@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -133,12 +134,18 @@ export const calculateCompanyScore = (company: Company): { finalScore: number; s
   let totalWeight = 0;
   let scoreSum = 0;
   
+  // Helper function to safely calculate averages
+  const calculateAverage = (values: (number | null | undefined)[]) => {
+    const validValues = values.filter((v): v is number => v !== null && v !== undefined);
+    if (validValues.length === 0) return null;
+    return validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
+  };
+  
   // Calculate EBITDA score (35%)
-  if (company.ebitda_2023 !== undefined && company.ebitda_2023 !== null && 
-      company.ebitda_2024 !== undefined && company.ebitda_2024 !== null && 
-      company.ebitda_2025 !== undefined && company.ebitda_2025 !== null) {
-    
-    const ebitdaAvg = (company.ebitda_2023 + company.ebitda_2024 + company.ebitda_2025) / 3;
+  const ebitdaValues = [company.ebitda_2023, company.ebitda_2024, company.ebitda_2025];
+  const ebitdaAvg = calculateAverage(ebitdaValues);
+  
+  if (ebitdaAvg !== null) {
     let ebitdaScore = 0;
     
     if (ebitdaAvg > 13) {
@@ -152,11 +159,10 @@ export const calculateCompanyScore = (company: Company): { finalScore: number; s
   }
   
   // Calculate YoY Growth score (30%)
-  if (company.yoy_growth_21_22 !== undefined && company.yoy_growth_21_22 !== null && 
-      company.yoy_growth_22_23 !== undefined && company.yoy_growth_22_23 !== null && 
-      company.yoy_growth_23_24 !== undefined && company.yoy_growth_23_24 !== null) {
-    
-    const growthAvg = (company.yoy_growth_21_22 + company.yoy_growth_22_23 + company.yoy_growth_23_24) / 3;
+  const growthValues = [company.yoy_growth_21_22, company.yoy_growth_22_23, company.yoy_growth_23_24];
+  const growthAvg = calculateAverage(growthValues);
+  
+  if (growthAvg !== null) {
     let growthScore = 0;
     
     if (growthAvg > 16) {
