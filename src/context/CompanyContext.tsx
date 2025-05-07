@@ -69,15 +69,15 @@ export interface TeamMember {
   role: string;
 }
 
-// Example team members data
+// Updated team members data with the new names and roles
 const teamMembersData: TeamMember[] = [
-  { id: "1", name: "Marcos Silva", avatar: "MS", role: "Sócio Gestor" },
-  { id: "2", name: "Ana Luiza Costa", avatar: "AC", role: "Analista Sênior" },
-  { id: "3", name: "Rafael Oliveira", avatar: "RO", role: "Analista de Investimentos" },
-  { id: "4", name: "Tatiana Santos", avatar: "TS", role: "Diretora de Operações" },
-  { id: "5", name: "João Pedro Mendes", avatar: "JM", role: "Analista Júnior" },
-  { id: "6", name: "Camila Ferreira", avatar: "CF", role: "Sócia" },
-  { id: "7", name: "Bruno Almeida", avatar: "BA", role: "Analista Financeiro" }
+  { id: "1", name: "Giovanna", avatar: "GI", role: "Sócia Gestora" },
+  { id: "2", name: "Maria Paula", avatar: "MP", role: "Sócia Gestora" },
+  { id: "3", name: "Ester", avatar: "ES", role: "Analista" },
+  { id: "4", name: "Nicolle", avatar: "NI", role: "Analista" },
+  { id: "5", name: "Giovanna Dangelo", avatar: "GD", role: "Analista" },
+  { id: "6", name: "Mel Bayde", avatar: "MB", role: "Analista" },
+  { id: "7", name: "Mauro Soledade", avatar: "MS", role: "Analista" }
 ];
 
 // Mock events for calendar

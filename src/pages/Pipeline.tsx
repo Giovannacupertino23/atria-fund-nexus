@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -88,10 +87,21 @@ const Pipeline = () => {
     // Count companies per responsible
     companies.forEach(company => {
       if (company.responsible) {
-        // Find the team member ID from their name
+        // Find the team member by exact name match
         const member = teamMembers.find(m => m.name === company.responsible);
+        
+        // If exact match found, add company to their workload
         if (member && workload[member.id]) {
           workload[member.id].companies.push(company);
+        }
+        // If no exact match, check for partial matches (to handle name variations)
+        else {
+          const possibleMember = teamMembers.find(m => 
+            company.responsible && company.responsible.includes(m.name)
+          );
+          if (possibleMember && workload[possibleMember.id]) {
+            workload[possibleMember.id].companies.push(company);
+          }
         }
       }
     });
