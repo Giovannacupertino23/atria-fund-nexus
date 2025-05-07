@@ -23,7 +23,16 @@ export type Database = {
           ebitda_2024: number | null
           ebitda_2025: number | null
           final_score: number | null
+          financial_analysis: string | null
+          financial_link: string | null
+          financial_risk: string | null
+          governance_analysis: string | null
+          governance_link: string | null
+          governance_risk: string | null
           id: string
+          legal_analysis: string | null
+          legal_link: string | null
+          legal_risk: string | null
           leverage: number | null
           market_cap: number | null
           name: string
@@ -54,7 +63,16 @@ export type Database = {
           ebitda_2024?: number | null
           ebitda_2025?: number | null
           final_score?: number | null
+          financial_analysis?: string | null
+          financial_link?: string | null
+          financial_risk?: string | null
+          governance_analysis?: string | null
+          governance_link?: string | null
+          governance_risk?: string | null
           id?: string
+          legal_analysis?: string | null
+          legal_link?: string | null
+          legal_risk?: string | null
           leverage?: number | null
           market_cap?: number | null
           name: string
@@ -85,7 +103,16 @@ export type Database = {
           ebitda_2024?: number | null
           ebitda_2025?: number | null
           final_score?: number | null
+          financial_analysis?: string | null
+          financial_link?: string | null
+          financial_risk?: string | null
+          governance_analysis?: string | null
+          governance_link?: string | null
+          governance_risk?: string | null
           id?: string
+          legal_analysis?: string | null
+          legal_link?: string | null
+          legal_risk?: string | null
           leverage?: number | null
           market_cap?: number | null
           name?: string
