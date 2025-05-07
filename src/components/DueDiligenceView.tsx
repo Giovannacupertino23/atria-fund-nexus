@@ -5,18 +5,19 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, CircleAlert, CircleCheck, ExternalLink, FileText } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { RiskLevel } from "@/context/CompanyContext";
 
 interface DueDiligenceViewProps {
   dueDiligenceData: {
     financial_link?: string | null;
     financial_analysis?: string | null;
-    financial_risk?: string | null;
+    financial_risk?: RiskLevel | null;
     legal_link?: string | null;
     legal_analysis?: string | null;
-    legal_risk?: string | null;
+    legal_risk?: RiskLevel | null;
     governance_link?: string | null;
     governance_analysis?: string | null;
-    governance_risk?: string | null;
+    governance_risk?: RiskLevel | null;
   };
   onEdit: () => void;
 }

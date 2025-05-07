@@ -3,7 +3,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useCompany } from "@/context/CompanyContext";
+import { useCompany, RiskLevel } from "@/context/CompanyContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,15 +47,15 @@ type DueDiligenceFormValues = z.infer<typeof dueDiligenceSchema>;
 interface DueDiligenceFormProps {
   companyId: string;
   initialData?: {
-    financial_link?: string;
-    financial_analysis?: string;
-    financial_risk?: string;
-    legal_link?: string;
-    legal_analysis?: string;
-    legal_risk?: string;
-    governance_link?: string;
-    governance_analysis?: string;
-    governance_risk?: string;
+    financial_link?: string | null;
+    financial_analysis?: string | null;
+    financial_risk?: RiskLevel | null;
+    legal_link?: string | null;
+    legal_analysis?: string | null;
+    legal_risk?: RiskLevel | null;
+    governance_link?: string | null;
+    governance_analysis?: string | null;
+    governance_risk?: RiskLevel | null;
   };
   onSuccess?: () => void;
 }

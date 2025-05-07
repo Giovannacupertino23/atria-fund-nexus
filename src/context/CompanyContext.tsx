@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +7,7 @@ export type CompanyStatus = "approved" | "evaluating" | "not_approved";
 export type PipelineStatus = "prospect" | "meeting_scheduled" | "meeting_done" | "due_diligence" | "invested";
 export type ScoreColor = "green" | "orange" | "red";
 export type CashFlow = "positive" | "negative";
+export type RiskLevel = "high" | "medium" | "low";
 
 export interface Company {
   id: string;
@@ -38,6 +38,16 @@ export interface Company {
   score_color?: ScoreColor | null;
   created_at?: string | null;
   updated_at?: string | null;
+  // Due Diligence fields
+  financial_link?: string | null;
+  financial_analysis?: string | null;
+  financial_risk?: RiskLevel | null;
+  legal_link?: string | null;
+  legal_analysis?: string | null;
+  legal_risk?: RiskLevel | null;
+  governance_link?: string | null;
+  governance_analysis?: string | null;
+  governance_risk?: RiskLevel | null;
 }
 
 // Calendar event type
