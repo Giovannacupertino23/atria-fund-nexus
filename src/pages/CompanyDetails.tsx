@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCompany } from "@/context/CompanyContext";
@@ -12,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CompanyEditForm from "@/components/forms/CompanyEditForm";
+import DueDiligenceForm from "@/components/forms/DueDiligenceForm";
+import DueDiligenceView from "@/components/DueDiligenceView";
 
 const CompanyDetails = () => {
   const {
@@ -34,6 +35,7 @@ const CompanyDetails = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDueDiligenceEditMode, setIsDueDiligenceEditMode] = useState(false);
   
   useEffect(() => {
     const loadData = async () => {
@@ -62,6 +64,14 @@ const CompanyDetails = () => {
     toast({
       title: "Empresa atualizada",
       description: "Os dados foram atualizados com sucesso."
+    });
+  };
+
+  const handleDueDiligenceComplete = () => {
+    setIsDueDiligenceEditMode(false);
+    toast({
+      title: "Due Diligence atualizada",
+      description: "As informações de due diligence foram atualizadas com sucesso."
     });
   };
   
@@ -317,6 +327,7 @@ const CompanyDetails = () => {
           <TabsTrigger value="financial">Dados Financeiros</TabsTrigger>
           <TabsTrigger value="about">Sobre</TabsTrigger>
           <TabsTrigger value="risks">Fatores de Risco</TabsTrigger>
+          <TabsTrigger value="due_diligence">Due Diligence</TabsTrigger>
         </TabsList>
         
         <TabsContent value="financial">
@@ -527,6 +538,61 @@ const CompanyDetails = () => {
                 </div>}
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="due_diligence">
+          {isDueDiligenceEditMode ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Editar Due Diligence</CardTitle>
+                <CardDescription>
+                  Preencha as informações de due diligence para esta empresa
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DueDiligenceForm 
+                  companyId={company.id}
+                  initialData={{
+                    financial_link: company.financial_link,
+                    financial_analysis: company.financial_analysis,
+                    financial_risk: company.financial_risk,
+                    legal_link: company.legal_link,
+                    legal_analysis: company.legal_analysis,
+                    legal_risk: company.legal_risk,
+                    governance_link: company.governance_link,
+                    governance_analysis: company.governance_analysis,
+                    governance_risk: company.governance_risk,
+                  }}
+                  onSuccess={handleDueDiligenceComplete}
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Due Diligence</CardTitle>
+                <CardDescription>
+                  Análise detalhada de due diligence da empresa
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DueDiligenceView 
+                  dueDiligenceData={{
+                    financial_link: company.financial_link,
+                    financial_analysis: company.financial_analysis,
+                    financial_risk: company.financial_risk,
+                    legal_link: company.legal_link,
+                    legal_analysis: company.legal_analysis,
+                    legal_risk: company.legal_risk,
+                    governance_link: company.governance_link,
+                    governance_analysis: company.governance_analysis,
+                    governance_risk: company.governance_risk,
+                  }}
+                  onEdit={() => setIsDueDiligenceEditMode(true)}
+                />
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>;
