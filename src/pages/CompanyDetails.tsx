@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import CompanyEditForm from "@/components/forms/CompanyEditForm";
 import DueDiligenceForm from "@/components/forms/DueDiligenceForm";
 import DueDiligenceView from "@/components/DueDiligenceView";
+import SingleDueDiligenceForm, { DueDiligenceType } from "@/components/forms/SingleDueDiligenceForm";
 
 const CompanyDetails = () => {
   const {
@@ -36,6 +37,7 @@ const CompanyDetails = () => {
   const [localLoading, setLocalLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDueDiligenceEditMode, setIsDueDiligenceEditMode] = useState(false);
+  const [currentDueDiligenceType, setCurrentDueDiligenceType] = useState<DueDiligenceType | null>(null);
   
   useEffect(() => {
     const loadData = async () => {
@@ -69,12 +71,29 @@ const CompanyDetails = () => {
 
   const handleDueDiligenceComplete = () => {
     setIsDueDiligenceEditMode(false);
+    setCurrentDueDiligenceType(null);
     toast({
       title: "Due Diligence atualizada",
       description: "As informações de due diligence foram atualizadas com sucesso."
     });
   };
   
+  const handleEditFinancial = () => {
+    setCurrentDueDiligenceType("financial");
+  };
+  
+  const handleEditLegal = () => {
+    setCurrentDueDiligenceType("legal");
+  };
+  
+  const handleEditGovernance = () => {
+    setCurrentDueDiligenceType("governance");
+  };
+  
+  const handleCancelSingleEdit = () => {
+    setCurrentDueDiligenceType(null);
+  };
+
   if (isLoading || localLoading) {
     return <div className="flex flex-col items-center justify-center h-[70vh]">
         <Loader2 className="h-10 w-10 animate-spin text-atria-red mb-4" />
@@ -184,6 +203,118 @@ const CompanyDetails = () => {
   // Calcular médias de EBITDA e YoY com segurança
   const ebitdaAvg = calculateAverage([company.ebitda_2023, company.ebitda_2024, company.ebitda_2025]);
   const yoyAvg = calculateAverage([company.yoy_growth_21_22, company.yoy_growth_22_23, company.yoy_growth_23_24]);
+  
+  const renderDueDiligenceContent = () => {
+    if (currentDueDiligenceType === "financial") {
+      return (
+        <SingleDueDiligenceForm 
+          companyId={company.id}
+          type="financial"
+          title="Financeira"
+          borderColor="border-l-blue-500"
+          initialData={{
+            link: company.financial_link,
+            analysis: company.financial_analysis,
+            risk: company.financial_risk,
+          }}
+          onSuccess={handleDueDiligenceComplete}
+          onCancel={handleCancelSingleEdit}
+        />
+      );
+    } else if (currentDueDiligenceType === "legal") {
+      return (
+        <SingleDueDiligenceForm 
+          companyId={company.id}
+          type="legal"
+          title="Jurídica"
+          borderColor="border-l-purple-500"
+          initialData={{
+            link: company.legal_link,
+            analysis: company.legal_analysis,
+            risk: company.legal_risk,
+          }}
+          onSuccess={handleDueDiligenceComplete}
+          onCancel={handleCancelSingleEdit}
+        />
+      );
+    } else if (currentDueDiligenceType === "governance") {
+      return (
+        <SingleDueDiligenceForm 
+          companyId={company.id}
+          type="governance"
+          title="de Governança"
+          borderColor="border-l-emerald-500"
+          initialData={{
+            link: company.governance_link,
+            analysis: company.governance_analysis,
+            risk: company.governance_risk,
+          }}
+          onSuccess={handleDueDiligenceComplete}
+          onCancel={handleCancelSingleEdit}
+        />
+      );
+    }
+    
+    if (isDueDiligenceEditMode) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle>Editar Due Diligence</CardTitle>
+            <CardDescription>
+              Preencha as informações de due diligence para esta empresa
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DueDiligenceForm 
+              companyId={company.id}
+              initialData={{
+                financial_link: company.financial_link,
+                financial_analysis: company.financial_analysis,
+                financial_risk: company.financial_risk,
+                legal_link: company.legal_link,
+                legal_analysis: company.legal_analysis,
+                legal_risk: company.legal_risk,
+                governance_link: company.governance_link,
+                governance_analysis: company.governance_analysis,
+                governance_risk: company.governance_risk,
+              }}
+              onSuccess={handleDueDiligenceComplete}
+            />
+          </CardContent>
+        </Card>
+      );
+    } else {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle>Due Diligence</CardTitle>
+            <CardDescription>
+              Análise detalhada de due diligence da empresa
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DueDiligenceView 
+              dueDiligenceData={{
+                financial_link: company.financial_link,
+                financial_analysis: company.financial_analysis,
+                financial_risk: company.financial_risk,
+                legal_link: company.legal_link,
+                legal_analysis: company.legal_analysis,
+                legal_risk: company.legal_risk,
+                governance_link: company.governance_link,
+                governance_analysis: company.governance_analysis,
+                governance_risk: company.governance_risk,
+              }}
+              onEdit={() => setIsDueDiligenceEditMode(true)}
+              onEditFinancial={handleEditFinancial}
+              onEditLegal={handleEditLegal}
+              onEditGovernance={handleEditGovernance}
+            />
+          </CardContent>
+        </Card>
+      );
+    }
+  };
   
   return <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -541,58 +672,7 @@ const CompanyDetails = () => {
         </TabsContent>
         
         <TabsContent value="due_diligence">
-          {isDueDiligenceEditMode ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Editar Due Diligence</CardTitle>
-                <CardDescription>
-                  Preencha as informações de due diligence para esta empresa
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DueDiligenceForm 
-                  companyId={company.id}
-                  initialData={{
-                    financial_link: company.financial_link,
-                    financial_analysis: company.financial_analysis,
-                    financial_risk: company.financial_risk,
-                    legal_link: company.legal_link,
-                    legal_analysis: company.legal_analysis,
-                    legal_risk: company.legal_risk,
-                    governance_link: company.governance_link,
-                    governance_analysis: company.governance_analysis,
-                    governance_risk: company.governance_risk,
-                  }}
-                  onSuccess={handleDueDiligenceComplete}
-                />
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Due Diligence</CardTitle>
-                <CardDescription>
-                  Análise detalhada de due diligence da empresa
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DueDiligenceView 
-                  dueDiligenceData={{
-                    financial_link: company.financial_link,
-                    financial_analysis: company.financial_analysis,
-                    financial_risk: company.financial_risk,
-                    legal_link: company.legal_link,
-                    legal_analysis: company.legal_analysis,
-                    legal_risk: company.legal_risk,
-                    governance_link: company.governance_link,
-                    governance_analysis: company.governance_analysis,
-                    governance_risk: company.governance_risk,
-                  }}
-                  onEdit={() => setIsDueDiligenceEditMode(true)}
-                />
-              </CardContent>
-            </Card>
-          )}
+          {renderDueDiligenceContent()}
         </TabsContent>
       </Tabs>
     </div>;

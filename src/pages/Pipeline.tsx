@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 const Pipeline = () => {
   const { companies, isLoading, teamMembers } = useCompany();
@@ -24,6 +26,35 @@ const Pipeline = () => {
   const meetingDone = filterCompaniesByPipelineStatus("meeting_done");
   const dueDiligence = filterCompaniesByPipelineStatus("due_diligence");
   const invested = filterCompaniesByPipelineStatus("invested");
+
+  // Count companies by color for the chart
+  const countCompaniesByColor = () => {
+    const counts = {
+      green: 0,
+      orange: 0,
+      red: 0,
+      noScore: 0
+    };
+
+    companies.forEach(company => {
+      if (company.score_color === "green") {
+        counts.green += 1;
+      } else if (company.score_color === "orange") {
+        counts.orange += 1;
+      } else if (company.score_color === "red") {
+        counts.red += 1;
+      } else {
+        counts.noScore += 1;
+      }
+    });
+
+    return [
+      { name: "Verde", value: counts.green, color: "#22c55e" },
+      { name: "Laranja", value: counts.orange, color: "#f97316" },
+      { name: "Vermelho", value: counts.red, color: "#ef4444" },
+      { name: "Sem Score", value: counts.noScore, color: "#d1d5db" }
+    ];
+  };
 
   const getCompanyColor = (company: Company) => {
     switch (company.score_color) {
@@ -108,6 +139,9 @@ const Pipeline = () => {
     </div>
   );
 
+  // Prepare chart data
+  const colorData = countCompaniesByColor();
+  
   return (
     <div className="space-y-6">
       <div>
@@ -171,6 +205,33 @@ const Pipeline = () => {
                     <span className="text-sm text-gray-500">Investidas</span>
                     <span className="text-2xl font-bold">{invested.length}</span>
                     <span className="text-xs text-gray-500">{((invested.length / companies.length) * 100).toFixed(1)}% do total</span>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <h3 className="text-lg font-medium mb-4">Distribuição por Score de Qualidade</h3>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={colorData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          nameKey="name"
+                          label={({name, value, percent}) => `${name}: ${value} (${(percent*100).toFixed(0)}%)`}
+                        >
+                          {colorData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => [`${value} empresas`, 'Quantidade']} />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </CardContent>
