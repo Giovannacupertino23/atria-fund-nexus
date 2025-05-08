@@ -5,26 +5,9 @@ import { useCompany, Company, PipelineStatus } from "@/context/CompanyContext";
 import { Loader2, BarChart3, Users, Filter } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { 
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Cell,
-  PieChart,
-  Pie,
-  Tooltip,
-  Legend,
-} from "recharts";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Pipeline = () => {
   const { companies, isLoading, teamMembers } = useCompany();
@@ -50,30 +33,6 @@ const Pipeline = () => {
       default: return "border-l-4 border-gray-300";
     }
   };
-
-  // Dashboard data
-  const pipelineData = useMemo(() => [
-    { name: "Prospecção", value: prospects.length, color: "#6366f1" },
-    { name: "Reunião Agendada", value: meetingScheduled.length, color: "#8b5cf6" },
-    { name: "Reunião Feita", value: meetingDone.length, color: "#ec4899" },
-    { name: "Due Diligence", value: dueDiligence.length, color: "#f97316" },
-    { name: "Investidas", value: invested.length, color: "#10b981" },
-  ], [prospects.length, meetingScheduled.length, meetingDone.length, dueDiligence.length, invested.length]);
-  
-  // Calculate score distribution 
-  const scoreDistribution = useMemo(() => {
-    const greenCompanies = companies.filter(company => company.score_color === "green").length;
-    const orangeCompanies = companies.filter(company => company.score_color === "orange").length;
-    const redCompanies = companies.filter(company => company.score_color === "red").length;
-    const noScoreCompanies = companies.filter(company => !company.score_color).length;
-    
-    return [
-      { name: "Alta Pontuação", value: greenCompanies, color: "#10b981" },
-      { name: "Média Pontuação", value: orangeCompanies, color: "#f97316" },
-      { name: "Baixa Pontuação", value: redCompanies, color: "#ef4444" },
-      { name: "Sem Pontuação", value: noScoreCompanies, color: "#94a3b8" },
-    ];
-  }, [companies]);
 
   // Calculate team workload
   const teamWorkload = useMemo(() => {
@@ -180,87 +139,6 @@ const Pipeline = () => {
           </TabsList>
           
           <TabsContent value="dashboard" className="space-y-4 animate-fade-in">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Distribuição do Pipeline</CardTitle>
-                  <CardDescription>
-                    Empresas por etapa do processo
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-2">
-                  <div className="h-[300px] w-full">
-                    <ChartContainer
-                      config={{
-                        prospect: { label: "Prospecção", color: "#6366f1" },
-                        meeting_scheduled: { label: "Reunião Agendada", color: "#8b5cf6" },
-                        meeting_done: { label: "Reunião Feita", color: "#ec4899" },
-                        due_diligence: { label: "Due Diligence", color: "#f97316" },
-                        invested: { label: "Investidas", color: "#10b981" }
-                      }}
-                    >
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={pipelineData} barCategoryGap={4}>
-                          <XAxis dataKey="name" scale="band" />
-                          <YAxis />
-                          <ChartTooltip
-                            content={<ChartTooltipContent formatter={(value) => [`${value} empresas`, "Quantidade"]} />}
-                          />
-                          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                            {pipelineData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Distribuição de Scores</CardTitle>
-                  <CardDescription>
-                    Empresas por nível de pontuação
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-2">
-                  <div className="h-[300px] w-full">
-                    <ChartContainer
-                      config={{
-                        green: { label: "Alta Pontuação", color: "#10b981" },
-                        orange: { label: "Média Pontuação", color: "#f97316" },
-                        red: { label: "Baixa Pontuação", color: "#ef4444" },
-                        none: { label: "Sem Pontuação", color: "#94a3b8" }
-                      }}
-                    >
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={scoreDistribution}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                            label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          >
-                            {scoreDistribution.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value) => [`${value} empresas`, "Quantidade"]} />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Análise de Pipeline</CardTitle>
