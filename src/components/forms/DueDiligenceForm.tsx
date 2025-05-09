@@ -350,10 +350,10 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
             </CardContent>
           </Card>
 
-          {/* Due Diligence de Governança */}
+          {/* Due Diligence Estratégica */}
           <Card className="border-l-4 border-l-emerald-500">
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium mb-4">Due Diligence de Governança</h3>
+              <h3 className="text-lg font-medium mb-4">Due Diligence Estratégica</h3>
               
               <div className="space-y-4">
                 {renderLinksFieldArray(governanceLinksArray, "governanceLinks")}
@@ -363,16 +363,16 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                   name="governanceAnalysis"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Análise de Governança</FormLabel>
+                      <FormLabel>Análise Estratégica</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="A estrutura de governança é bem definida, com conselho administrativo ativo e políticas claras de compliance..." 
+                          placeholder="A estratégia da empresa é bem definida, com planos claros de crescimento e posicionamento de mercado..." 
                           className="min-h-[200px]" 
                           {...field} 
                         />
                       </FormControl>
                       <FormDescription>
-                        Estrutura e práticas de governança corporativa
+                        Avaliação da estratégia e posicionamento de mercado
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

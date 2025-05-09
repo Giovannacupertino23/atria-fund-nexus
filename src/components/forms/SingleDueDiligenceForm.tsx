@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { useCompany, RiskLevel } from "@/context/CompanyContext";
 import { useToast } from "@/hooks/use-toast";
@@ -66,8 +66,14 @@ export default function SingleDueDiligenceForm({
   const { toast } = useToast();
 
   // Convert initial data to form values with array of links
+  const splitLinks = (linkString: string | null | undefined): string[] => {
+    if (!linkString) return [""];
+    const links = linkString.split(',').map(link => link.trim());
+    return links.length > 0 ? links : [""];
+  };
+  
   const defaultValues: SingleDueDiligenceFormValues = {
-    links: initialData?.link ? [initialData.link] : [""],
+    links: splitLinks(initialData?.link),
     analysis: initialData?.analysis || "",
     risk: (initialData?.risk as "high" | "medium" | "low") || "medium",
   };
@@ -77,7 +83,9 @@ export default function SingleDueDiligenceForm({
     defaultValues,
   });
 
-  const { fields, append, remove } = form.useFieldArray({
+  // Create field arrays for links
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
     name: "links",
   });
 
@@ -128,12 +136,20 @@ export default function SingleDueDiligenceForm({
     }
   };
 
+  // Update the title based on the type
+  const getFormTitle = () => {
+    if (type === "governance") {
+      return "Estratégica";
+    }
+    return title;
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card className={`border-l-4 ${borderColor}`}>
           <CardHeader>
-            <CardTitle>{title}</CardTitle>
+            <CardTitle>{getFormTitle()}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">

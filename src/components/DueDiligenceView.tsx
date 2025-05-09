@@ -165,7 +165,7 @@ export default function DueDiligenceView({
         />
         
         <DueDiligenceBlock 
-          title="Due Diligence de Governança"
+          title="Due Diligence Estratégica"
           analysis={dueDiligenceData.governance_analysis}
           link={dueDiligenceData.governance_link}
           risk={dueDiligenceData.governance_risk}
