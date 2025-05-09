@@ -63,6 +63,31 @@ export default function DueDiligenceView({
     }
   };
 
+  // Function to split links string and create buttons for each link
+  const renderDocumentationLinks = (linkString: string | null | undefined) => {
+    if (!linkString) return null;
+    
+    const links = linkString.split(',');
+    
+    return (
+      <div className="mt-4 flex flex-wrap gap-2">
+        {links.map((link, index) => (
+          <Button 
+            key={index}
+            variant="outline" 
+            size="sm" 
+            className="text-sm" 
+            onClick={() => window.open(link.trim(), "_blank")}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Doc {links.length > 1 ? index + 1 : ''}
+            <ExternalLink className="h-3 w-3 ml-1" />
+          </Button>
+        ))}
+      </div>
+    );
+  };
+
   // Função para renderizar o bloco de cada due diligence
   const DueDiligenceBlock = ({ 
     title, 
@@ -97,27 +122,14 @@ export default function DueDiligenceView({
         </div>
         
         {analysis ? (
-          <div className="prose max-w-none text-sm text-gray-700 mt-4">
+          <div className="prose max-w-none text-sm text-gray-700 mt-4 whitespace-pre-wrap">
             <p>{analysis}</p>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground italic">Nenhuma análise registrada.</p>
         )}
         
-        {link && (
-          <div className="mt-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-sm" 
-              onClick={() => window.open(link, "_blank")}
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Documentação
-              <ExternalLink className="h-3 w-3 ml-1" />
-            </Button>
-          </div>
-        )}
+        {renderDocumentationLinks(link)}
       </CardContent>
     </Card>
   );

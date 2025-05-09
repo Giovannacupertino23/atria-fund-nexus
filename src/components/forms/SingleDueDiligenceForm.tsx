@@ -24,13 +24,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, CircleAlert, CircleCheck, Link } from "lucide-react";
+import { AlertTriangle, CircleAlert, CircleCheck, Link, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Define schema for a single type of due diligence
 const singleDueDiligenceSchema = z.object({
-  link: z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0)),
-  analysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }).max(1000),
+  links: z.array(z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0))),
+  analysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }),
   risk: z.enum(["high", "medium", "low"]),
 });
 
@@ -65,9 +65,9 @@ export default function SingleDueDiligenceForm({
   const { updateCompany } = useCompany();
   const { toast } = useToast();
 
-  // Convert initial data to form values
+  // Convert initial data to form values with array of links
   const defaultValues: SingleDueDiligenceFormValues = {
-    link: initialData?.link || "",
+    links: initialData?.link ? [initialData.link] : [""],
     analysis: initialData?.analysis || "",
     risk: (initialData?.risk as "high" | "medium" | "low") || "medium",
   };
@@ -77,23 +77,31 @@ export default function SingleDueDiligenceForm({
     defaultValues,
   });
 
+  const { fields, append, remove } = form.useFieldArray({
+    name: "links",
+  });
+
   const onSubmit = async (data: SingleDueDiligenceFormValues) => {
     setIsLoading(true);
     
     try {
+      // Filter out empty links and join with comma if multiple links
+      const filteredLinks = data.links.filter(link => link.trim() !== "");
+      const linkString = filteredLinks.length > 0 ? filteredLinks.join(',') : null;
+      
       // Construct the update object based on due diligence type
       const updateFields: Record<string, any> = {};
       
       if (type === "financial") {
-        updateFields.financial_link = data.link;
+        updateFields.financial_link = linkString;
         updateFields.financial_analysis = data.analysis;
         updateFields.financial_risk = data.risk;
       } else if (type === "legal") {
-        updateFields.legal_link = data.link;
+        updateFields.legal_link = linkString;
         updateFields.legal_analysis = data.analysis;
         updateFields.legal_risk = data.risk;
       } else if (type === "governance") {
-        updateFields.governance_link = data.link;
+        updateFields.governance_link = linkString;
         updateFields.governance_analysis = data.analysis;
         updateFields.governance_risk = data.risk;
       }
@@ -128,28 +136,58 @@ export default function SingleDueDiligenceForm({
             <CardTitle>{title}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="link"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Link className="h-4 w-4" />
-                    Link para documentação
-                  </FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="https://example.com/docs" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    URL para documentos relevantes
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-3">
+              <FormLabel className="flex items-center gap-2">
+                <Link className="h-4 w-4" />
+                Links para documentação
+              </FormLabel>
+              
+              {fields.map((field, index) => (
+                <div key={field.id} className="flex items-center gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`links.${index}`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input 
+                            placeholder="https://example.com/docs" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {fields.length > 1 && (
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0"
+                      onClick={() => remove(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append("")}
+                className="mt-2 flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Adicionar link
+              </Button>
+              
+              <FormDescription>
+                URLs para documentos relevantes
+              </FormDescription>
+            </div>
             
             <FormField
               control={form.control}
@@ -160,7 +198,7 @@ export default function SingleDueDiligenceForm({
                   <FormControl>
                     <Textarea 
                       placeholder="Insira sua análise aqui..." 
-                      className="min-h-[120px]" 
+                      className="min-h-[200px]" 
                       {...field} 
                     />
                   </FormControl>

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { useCompany, RiskLevel } from "@/context/CompanyContext";
 import { useToast } from "@/hooks/use-toast";
@@ -24,21 +24,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, CircleAlert, CircleCheck, Link } from "lucide-react";
+import { AlertTriangle, CircleAlert, CircleCheck, Link, Plus, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 // Define o schema de validação para cada tipo de due diligence
 const dueDiligenceSchema = z.object({
-  financialLink: z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0)),
-  financialAnalysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }).max(1000),
+  financialLinks: z.array(z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0))),
+  financialAnalysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }),
   financialRisk: z.enum(["high", "medium", "low"]),
   
-  legalLink: z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0)),
-  legalAnalysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }).max(1000),
+  legalLinks: z.array(z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0))),
+  legalAnalysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }),
   legalRisk: z.enum(["high", "medium", "low"]),
   
-  governanceLink: z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0)),
-  governanceAnalysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }).max(1000),
+  governanceLinks: z.array(z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0))),
+  governanceAnalysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }),
   governanceRisk: z.enum(["high", "medium", "low"]),
 });
 
@@ -65,17 +65,24 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
   const { updateCompany } = useCompany();
   const { toast } = useToast();
 
+  // Split any existing links into arrays
+  const splitLinks = (linkString: string | null | undefined): string[] => {
+    if (!linkString) return [""];
+    const links = linkString.split(',').map(link => link.trim());
+    return links.length > 0 ? links : [""];
+  };
+
   // Converter dados iniciais para o formato do formulário
   const defaultValues: DueDiligenceFormValues = {
-    financialLink: initialData?.financial_link || "",
+    financialLinks: splitLinks(initialData?.financial_link),
     financialAnalysis: initialData?.financial_analysis || "",
     financialRisk: (initialData?.financial_risk as "high" | "medium" | "low") || "medium",
     
-    legalLink: initialData?.legal_link || "",
+    legalLinks: splitLinks(initialData?.legal_link),
     legalAnalysis: initialData?.legal_analysis || "",
     legalRisk: (initialData?.legal_risk as "high" | "medium" | "low") || "medium",
     
-    governanceLink: initialData?.governance_link || "",
+    governanceLinks: splitLinks(initialData?.governance_link),
     governanceAnalysis: initialData?.governance_analysis || "",
     governanceRisk: (initialData?.governance_risk as "high" | "medium" | "low") || "medium",
   };
@@ -85,19 +92,41 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
     defaultValues,
   });
 
+  // Create field arrays for links
+  const financialLinksArray = useFieldArray({
+    control: form.control,
+    name: "financialLinks",
+  });
+
+  const legalLinksArray = useFieldArray({
+    control: form.control,
+    name: "legalLinks",
+  });
+
+  const governanceLinksArray = useFieldArray({
+    control: form.control,
+    name: "governanceLinks",
+  });
+
   const onSubmit = async (data: DueDiligenceFormValues) => {
     setIsLoading(true);
     
     try {
+      // Filter and join links for each type
+      const filterAndJoinLinks = (links: string[]): string | null => {
+        const filteredLinks = links.filter(link => link.trim() !== "");
+        return filteredLinks.length > 0 ? filteredLinks.join(',') : null;
+      };
+      
       // Convertendo os dados do formulário para o formato esperado pelo updateCompany
       const updatedData = {
-        financial_link: data.financialLink,
+        financial_link: filterAndJoinLinks(data.financialLinks),
         financial_analysis: data.financialAnalysis,
         financial_risk: data.financialRisk,
-        legal_link: data.legalLink,
+        legal_link: filterAndJoinLinks(data.legalLinks),
         legal_analysis: data.legalAnalysis,
         legal_risk: data.legalRisk,
-        governance_link: data.governanceLink,
+        governance_link: filterAndJoinLinks(data.governanceLinks),
         governance_analysis: data.governanceAnalysis,
         governance_risk: data.governanceRisk,
       };
@@ -124,18 +153,69 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
     }
   };
 
-  // Função para renderizar o ícone de risco
-  const getRiskIcon = (risk: string) => {
-    switch (risk) {
-      case "high":
-        return <AlertTriangle className="h-5 w-5 text-red-500" />;
-      case "medium":
-        return <CircleAlert className="h-5 w-5 text-orange-500" />;
-      case "low":
-        return <CircleCheck className="h-5 w-5 text-green-500" />;
-      default:
-        return null;
-    }
+  // Render links field array UI
+  const renderLinksFieldArray = (
+    fieldArray: { 
+      fields: any[]; 
+      append: (value: string) => void; 
+      remove: (index: number) => void;
+    },
+    name: "financialLinks" | "legalLinks" | "governanceLinks"
+  ) => {
+    return (
+      <div className="space-y-3">
+        <FormLabel className="flex items-center gap-2">
+          <Link className="h-4 w-4" />
+          Links para documentação
+        </FormLabel>
+        
+        {fieldArray.fields.map((field, index) => (
+          <div key={field.id} className="flex items-center gap-2">
+            <FormField
+              control={form.control}
+              name={`${name}.${index}`}
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input 
+                      placeholder="https://example.com/docs" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {fieldArray.fields.length > 1 && (
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 w-8 p-0"
+                onClick={() => fieldArray.remove(index)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        ))}
+        
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => fieldArray.append("")}
+          className="mt-2 flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Adicionar link
+        </Button>
+        
+        <FormDescription>
+          URLs para documentos relevantes
+        </FormDescription>
+      </div>
+    );
   };
 
   return (
@@ -148,28 +228,7 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
               <h3 className="text-lg font-medium mb-4">Due Diligence Financeira</h3>
               
               <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="financialLink"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Link className="h-4 w-4" />
-                        Link para documentação
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="https://example.com/financial-docs" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        URL para documentos financeiros relevantes
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {renderLinksFieldArray(financialLinksArray, "financialLinks")}
                 
                 <FormField
                   control={form.control}
@@ -180,7 +239,7 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                       <FormControl>
                         <Textarea 
                           placeholder="A empresa apresenta indicadores financeiros sólidos, com crescimento consistente nos últimos 3 anos..." 
-                          className="min-h-[120px]" 
+                          className="min-h-[200px]" 
                           {...field} 
                         />
                       </FormControl>
@@ -233,28 +292,7 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
               <h3 className="text-lg font-medium mb-4">Due Diligence Jurídica</h3>
               
               <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="legalLink"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Link className="h-4 w-4" />
-                        Link para documentação
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="https://example.com/legal-docs" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        URL para documentos jurídicos relevantes
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {renderLinksFieldArray(legalLinksArray, "legalLinks")}
                 
                 <FormField
                   control={form.control}
@@ -265,7 +303,7 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                       <FormControl>
                         <Textarea 
                           placeholder="A empresa possui todos os registros legais em dia e não apresenta litígios significativos..." 
-                          className="min-h-[120px]" 
+                          className="min-h-[200px]" 
                           {...field} 
                         />
                       </FormControl>
@@ -318,28 +356,7 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
               <h3 className="text-lg font-medium mb-4">Due Diligence de Governança</h3>
               
               <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="governanceLink"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Link className="h-4 w-4" />
-                        Link para documentação
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="https://example.com/governance-docs" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        URL para documentos de governança relevantes
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {renderLinksFieldArray(governanceLinksArray, "governanceLinks")}
                 
                 <FormField
                   control={form.control}
@@ -350,7 +367,7 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                       <FormControl>
                         <Textarea 
                           placeholder="A estrutura de governança é bem definida, com conselho administrativo ativo e políticas claras de compliance..." 
-                          className="min-h-[120px]" 
+                          className="min-h-[200px]" 
                           {...field} 
                         />
                       </FormControl>
