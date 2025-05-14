@@ -5,7 +5,6 @@ import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { useCompany, RiskLevel } from "@/context/CompanyContext";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -15,8 +14,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -24,23 +21,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, CircleAlert, CircleCheck, Link, Plus, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 
-// Define schema for a single type of due diligence
+// Define the form schema
 const singleDueDiligenceSchema = z.object({
-  links: z.array(z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0))),
-  analysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }),
+  links: z.array(z.string().url("URL inválida").or(z.string().length(0))),
+  analysis: z.string(),
   risk: z.enum(["high", "medium", "low"]),
 });
 
-type SingleDueDiligenceFormValues = z.infer<typeof singleDueDiligenceSchema>;
+export type SingleDueDiligenceFormValues = z.infer<typeof singleDueDiligenceSchema>;
 
 export type DueDiligenceType = "financial" | "legal" | "governance";
 
 interface SingleDueDiligenceFormProps {
   companyId: string;
   type: DueDiligenceType;
+  title: string;
+  borderColor: string;
   initialData?: {
     link?: string | null;
     analysis?: string | null;
@@ -48,22 +50,20 @@ interface SingleDueDiligenceFormProps {
   };
   onSuccess?: () => void;
   onCancel?: () => void;
-  title: string;
-  borderColor: string;
 }
 
-export default function SingleDueDiligenceForm({
+const SingleDueDiligenceForm = ({
   companyId,
   type,
+  title,
+  borderColor,
   initialData,
   onSuccess,
-  onCancel,
-  title,
-  borderColor
-}: SingleDueDiligenceFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  onCancel
+}: SingleDueDiligenceFormProps) => {
   const { updateCompany } = useCompany();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Convert initial data to form values with array of links
   const splitLinks = (linkString: string | null | undefined): string[] => {
@@ -89,50 +89,53 @@ export default function SingleDueDiligenceForm({
     name: "links",
   });
 
-  const onSubmit = async (data: SingleDueDiligenceFormValues) => {
-    setIsLoading(true);
+  // Handle form submission
+  const onSubmit = async (values: SingleDueDiligenceFormValues) => {
+    setIsSubmitting(true);
     
     try {
-      // Filter out empty links and join with comma if multiple links
-      const filteredLinks = data.links.filter(link => link.trim() !== "");
-      const linkString = filteredLinks.length > 0 ? filteredLinks.join(',') : null;
+      // Join links back to comma-separated string, filtering out empty ones
+      const linkValue = values.links
+        .filter(link => link.trim() !== "")
+        .join(", ");
       
-      // Construct the update object based on due diligence type
-      const updateFields: Record<string, any> = {};
+      const updateData: Partial<Record<string, unknown>> = {};
       
+      // Set the correct fields based on type
       if (type === "financial") {
-        updateFields.financial_link = linkString;
-        updateFields.financial_analysis = data.analysis;
-        updateFields.financial_risk = data.risk;
+        updateData.financial_link = linkValue || null;
+        updateData.financial_analysis = values.analysis || null;
+        updateData.financial_risk = values.risk || null;
       } else if (type === "legal") {
-        updateFields.legal_link = linkString;
-        updateFields.legal_analysis = data.analysis;
-        updateFields.legal_risk = data.risk;
+        updateData.legal_link = linkValue || null;
+        updateData.legal_analysis = values.analysis || null;
+        updateData.legal_risk = values.risk || null;
       } else if (type === "governance") {
-        updateFields.governance_link = linkString;
-        updateFields.governance_analysis = data.analysis;
-        updateFields.governance_risk = data.risk;
+        updateData.governance_link = linkValue || null;
+        updateData.governance_analysis = values.analysis || null;
+        updateData.governance_risk = values.risk || null;
       }
       
-      await updateCompany(companyId, updateFields);
+      // Update company with due diligence data
+      await updateCompany(companyId, updateData);
       
       toast({
         title: `Due Diligence ${title} atualizada`,
-        description: "Os dados foram salvos com sucesso",
+        description: `As informações de due diligence ${title.toLowerCase()} foram atualizadas com sucesso.`
       });
       
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error(`Erro ao salvar due diligence ${type}:`, error);
+      console.error("Erro ao atualizar due diligence:", error);
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao salvar os dados",
-        variant: "destructive",
+        title: "Erro ao atualizar",
+        description: `Ocorreu um erro ao tentar atualizar as informações de due diligence ${title.toLowerCase()}.`,
+        variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -153,10 +156,7 @@ export default function SingleDueDiligenceForm({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              <FormLabel className="flex items-center gap-2">
-                <Link className="h-4 w-4" />
-                Links para documentação
-              </FormLabel>
+              <FormLabel>Link para documentação</FormLabel>
               
               {fields.map((field, index) => (
                 <div key={field.id} className="flex items-center gap-2">
@@ -166,111 +166,107 @@ export default function SingleDueDiligenceForm({
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <FormControl>
-                          <Input 
-                            placeholder="https://example.com/docs" 
-                            {...field} 
+                          <Input
+                            placeholder="https://exemplo.com/documentação"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  {fields.length > 1 && (
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 w-8 p-0"
+                  
+                  <div className="flex items-center space-x-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
                       onClick={() => remove(index)}
+                      disabled={fields.length === 1}
                     >
-                      <X className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                  )}
+                    
+                    {index === fields.length - 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => append("")}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
               
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => append("")}
-                className="mt-2 flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Adicionar link
-              </Button>
+              <FormField
+                control={form.control}
+                name="analysis"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Análise {getFormTitle()}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        className="min-h-[200px]"
+                        placeholder={
+                          type === "financial"
+                            ? "Resultados da análise financeira, incluindo fluxo de caixa, margens e projeções..."
+                            : type === "legal"
+                            ? "Questões jurídicas, compliance e conformidades regulatórias..."
+                            : "Avaliação da estratégia e posicionamento de mercado..."
+                        }
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
-              <FormDescription>
-                URLs para documentos relevantes
-              </FormDescription>
+              <FormField
+                control={form.control}
+                name="risk"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nível de Risco {getFormTitle()}</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o nível de risco" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="low">Baixo</SelectItem>
+                        <SelectItem value="medium">Médio</SelectItem>
+                        <SelectItem value="high">Alto</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             
-            <FormField
-              control={form.control}
-              name="analysis"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Análise</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Insira sua análise aqui..." 
-                      className="min-h-[200px]" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Detalhes sobre a análise realizada
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
+            <div className="flex justify-end space-x-2 pt-4">
+              {onCancel && (
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  Cancelar
+                </Button>
               )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="risk"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nível de Risco</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o nível de risco" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="low" className="text-green-600 flex items-center gap-2">
-                        <CircleCheck className="h-4 w-4" /> Baixo
-                      </SelectItem>
-                      <SelectItem value="medium" className="text-orange-500 flex items-center gap-2">
-                        <CircleAlert className="h-4 w-4" /> Médio
-                      </SelectItem>
-                      <SelectItem value="high" className="text-red-500 flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4" /> Alto
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={onCancel}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-              >
-                {isLoading ? "Salvando..." : "Salvar"}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  "Salvar"
+                )}
               </Button>
             </div>
           </CardContent>
@@ -278,4 +274,6 @@ export default function SingleDueDiligenceForm({
       </form>
     </Form>
   );
-}
+};
+
+export default SingleDueDiligenceForm;

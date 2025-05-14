@@ -1,11 +1,10 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, UseFormReturn, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { useCompany, RiskLevel } from "@/context/CompanyContext";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -15,8 +14,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -24,21 +21,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, CircleAlert, CircleCheck, Link, Plus, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 
-// Define o schema de validação para cada tipo de due diligence
+// Form Schema
+const linksSchema = z.array(z.string().url("URL inválida").or(z.string().length(0)));
+
 const dueDiligenceSchema = z.object({
-  financialLinks: z.array(z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0))),
-  financialAnalysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }),
+  financialLinks: linksSchema,
+  financialAnalysis: z.string(),
   financialRisk: z.enum(["high", "medium", "low"]),
-  
-  legalLinks: z.array(z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0))),
-  legalAnalysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }),
+  legalLinks: linksSchema,
+  legalAnalysis: z.string(),
   legalRisk: z.enum(["high", "medium", "low"]),
-  
-  governanceLinks: z.array(z.string().url({ message: "Insira uma URL válida" }).or(z.string().length(0))),
-  governanceAnalysis: z.string().min(5, { message: "A análise deve ter pelo menos 5 caracteres" }),
+  governanceLinks: linksSchema,
+  governanceAnalysis: z.string(),
   governanceRisk: z.enum(["high", "medium", "low"]),
 });
 
@@ -60,33 +60,36 @@ interface DueDiligenceFormProps {
   onSuccess?: () => void;
 }
 
-export default function DueDiligenceForm({ companyId, initialData, onSuccess }: DueDiligenceFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
+const DueDiligenceForm = ({
+  companyId,
+  initialData,
+  onSuccess
+}: DueDiligenceFormProps) => {
   const { updateCompany } = useCompany();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Split any existing links into arrays
+  // Split links into arrays
   const splitLinks = (linkString: string | null | undefined): string[] => {
     if (!linkString) return [""];
     const links = linkString.split(',').map(link => link.trim());
     return links.length > 0 ? links : [""];
   };
 
-  // Converter dados iniciais para o formato do formulário
+  // Initial form values
   const defaultValues: DueDiligenceFormValues = {
     financialLinks: splitLinks(initialData?.financial_link),
     financialAnalysis: initialData?.financial_analysis || "",
     financialRisk: (initialData?.financial_risk as "high" | "medium" | "low") || "medium",
-    
     legalLinks: splitLinks(initialData?.legal_link),
     legalAnalysis: initialData?.legal_analysis || "",
     legalRisk: (initialData?.legal_risk as "high" | "medium" | "low") || "medium",
-    
     governanceLinks: splitLinks(initialData?.governance_link),
     governanceAnalysis: initialData?.governance_analysis || "",
     governanceRisk: (initialData?.governance_risk as "high" | "medium" | "low") || "medium",
   };
 
+  // Form hook
   const form = useForm<DueDiligenceFormValues>({
     resolver: zodResolver(dueDiligenceSchema),
     defaultValues,
@@ -95,125 +98,120 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
   // Create field arrays for links
   const financialLinksArray = useFieldArray({
     control: form.control,
-    name: "financialLinks",
+    name: "financialLinks"
   });
 
   const legalLinksArray = useFieldArray({
     control: form.control,
-    name: "legalLinks",
+    name: "legalLinks"
   });
 
   const governanceLinksArray = useFieldArray({
     control: form.control,
-    name: "governanceLinks",
+    name: "governanceLinks"
   });
 
-  const onSubmit = async (data: DueDiligenceFormValues) => {
-    setIsLoading(true);
-    
+  // Handle form submission
+  const onSubmit = async (values: DueDiligenceFormValues) => {
+    setIsSubmitting(true);
     try {
-      // Filter and join links for each type
-      const filterAndJoinLinks = (links: string[]): string | null => {
-        const filteredLinks = links.filter(link => link.trim() !== "");
-        return filteredLinks.length > 0 ? filteredLinks.join(',') : null;
-      };
+      // Join links back to comma-separated string, filtering out empty ones
+      const financialLink = values.financialLinks
+        .filter(link => link.trim() !== "")
+        .join(", ");
       
-      // Convertendo os dados do formulário para o formato esperado pelo updateCompany
-      const updatedData = {
-        financial_link: filterAndJoinLinks(data.financialLinks),
-        financial_analysis: data.financialAnalysis,
-        financial_risk: data.financialRisk,
-        legal_link: filterAndJoinLinks(data.legalLinks),
-        legal_analysis: data.legalAnalysis,
-        legal_risk: data.legalRisk,
-        governance_link: filterAndJoinLinks(data.governanceLinks),
-        governance_analysis: data.governanceAnalysis,
-        governance_risk: data.governanceRisk,
-      };
+      const legalLink = values.legalLinks
+        .filter(link => link.trim() !== "")
+        .join(", ");
       
-      await updateCompany(companyId, updatedData);
+      const governanceLink = values.governanceLinks
+        .filter(link => link.trim() !== "")
+        .join(", ");
+      
+      // Update company with due diligence data
+      await updateCompany(companyId, {
+        financial_link: financialLink || null,
+        financial_analysis: values.financialAnalysis || null,
+        financial_risk: values.financialRisk || null,
+        legal_link: legalLink || null,
+        legal_analysis: values.legalAnalysis || null,
+        legal_risk: values.legalRisk || null,
+        governance_link: governanceLink || null,
+        governance_analysis: values.governanceAnalysis || null,
+        governance_risk: values.governanceRisk || null,
+      });
       
       toast({
         title: "Due Diligence atualizada",
-        description: "Os dados foram salvos com sucesso",
+        description: "As informações de due diligence foram atualizadas com sucesso."
       });
       
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error("Erro ao salvar due diligence:", error);
+      console.error("Erro ao atualizar due diligence:", error);
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao salvar os dados",
-        variant: "destructive",
+        title: "Erro ao atualizar",
+        description: "Ocorreu um erro ao tentar atualizar as informações de due diligence.",
+        variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  // Render links field array UI
+  // Helper function to render link field arrays
   const renderLinksFieldArray = (
-    fieldArray: { 
-      fields: any[]; 
-      append: (value: string) => void; 
-      remove: (index: number) => void;
-    },
-    name: "financialLinks" | "legalLinks" | "governanceLinks"
+    fieldArray: ReturnType<typeof useFieldArray>,
+    fieldName: "financialLinks" | "legalLinks" | "governanceLinks"
   ) => {
     return (
-      <div className="space-y-3">
-        <FormLabel className="flex items-center gap-2">
-          <Link className="h-4 w-4" />
-          Links para documentação
-        </FormLabel>
-        
+      <div className="space-y-2">
         {fieldArray.fields.map((field, index) => (
           <div key={field.id} className="flex items-center gap-2">
             <FormField
               control={form.control}
-              name={`${name}.${index}`}
+              name={`${fieldName}.${index}`}
               render={({ field }) => (
                 <FormItem className="flex-1">
+                  <FormLabel className={index !== 0 ? "sr-only" : ""}>
+                    {index === 0 ? "Link para documentação" : ""}
+                  </FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="https://example.com/docs" 
-                      {...field} 
+                    <Input
+                      placeholder="https://exemplo.com/documentação"
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {fieldArray.fields.length > 1 && (
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
-                className="h-8 w-8 p-0"
+
+            <div className="flex items-center space-x-1 mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
                 onClick={() => fieldArray.remove(index)}
+                disabled={fieldArray.fields.length === 1}
               >
-                <X className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </Button>
-            )}
+              {index === fieldArray.fields.length - 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fieldArray.append("")}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         ))}
-        
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => fieldArray.append("")}
-          className="mt-2 flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Adicionar link
-        </Button>
-        
-        <FormDescription>
-          URLs para documentos relevantes
-        </FormDescription>
       </div>
     );
   };
@@ -221,7 +219,7 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-6">
           {/* Due Diligence Financeira */}
           <Card className="border-l-4 border-l-blue-500">
             <CardContent className="pt-6">
@@ -238,13 +236,13 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                       <FormLabel>Análise Financeira</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="A empresa apresenta indicadores financeiros sólidos, com crescimento consistente nos últimos 3 anos..." 
+                          placeholder="Resultados da análise financeira, incluindo fluxo de caixa, margens e projeções..." 
                           className="min-h-[200px]" 
                           {...field} 
                         />
                       </FormControl>
                       <FormDescription>
-                        Detalhes sobre a saúde financeira da empresa
+                        Análise detalhada da saúde financeira da empresa
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -256,9 +254,9 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                   name="financialRisk"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nível de Risco</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
+                      <FormLabel>Nível de Risco Financeiro</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -267,15 +265,9 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="low" className="text-green-600 flex items-center gap-2">
-                            <CircleCheck className="h-4 w-4" /> Baixo
-                          </SelectItem>
-                          <SelectItem value="medium" className="text-orange-500 flex items-center gap-2">
-                            <CircleAlert className="h-4 w-4" /> Médio
-                          </SelectItem>
-                          <SelectItem value="high" className="text-red-500 flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4" /> Alto
-                          </SelectItem>
+                          <SelectItem value="low">Baixo</SelectItem>
+                          <SelectItem value="medium">Médio</SelectItem>
+                          <SelectItem value="high">Alto</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -285,7 +277,7 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
               </div>
             </CardContent>
           </Card>
-
+          
           {/* Due Diligence Jurídica */}
           <Card className="border-l-4 border-l-purple-500">
             <CardContent className="pt-6">
@@ -302,13 +294,13 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                       <FormLabel>Análise Jurídica</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="A empresa possui todos os registros legais em dia e não apresenta litígios significativos..." 
+                          placeholder="A empresa possui pendências jurídicas em processos trabalhistas, mas está regular com suas obrigações fiscais..." 
                           className="min-h-[200px]" 
                           {...field} 
                         />
                       </FormControl>
                       <FormDescription>
-                        Avaliação jurídica e compliance da empresa
+                        Questões jurídicas, compliance e conformidades regulatórias
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -320,9 +312,9 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                   name="legalRisk"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nível de Risco</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
+                      <FormLabel>Nível de Risco Jurídico</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -331,15 +323,9 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="low" className="text-green-600 flex items-center gap-2">
-                            <CircleCheck className="h-4 w-4" /> Baixo
-                          </SelectItem>
-                          <SelectItem value="medium" className="text-orange-500 flex items-center gap-2">
-                            <CircleAlert className="h-4 w-4" /> Médio
-                          </SelectItem>
-                          <SelectItem value="high" className="text-red-500 flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4" /> Alto
-                          </SelectItem>
+                          <SelectItem value="low">Baixo</SelectItem>
+                          <SelectItem value="medium">Médio</SelectItem>
+                          <SelectItem value="high">Alto</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -384,9 +370,9 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                   name="governanceRisk"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nível de Risco</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
+                      <FormLabel>Nível de Risco Estratégico</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -395,15 +381,9 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="low" className="text-green-600 flex items-center gap-2">
-                            <CircleCheck className="h-4 w-4" /> Baixo
-                          </SelectItem>
-                          <SelectItem value="medium" className="text-orange-500 flex items-center gap-2">
-                            <CircleAlert className="h-4 w-4" /> Médio
-                          </SelectItem>
-                          <SelectItem value="high" className="text-red-500 flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4" /> Alto
-                          </SelectItem>
+                          <SelectItem value="low">Baixo</SelectItem>
+                          <SelectItem value="medium">Médio</SelectItem>
+                          <SelectItem value="high">Alto</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -414,17 +394,22 @@ export default function DueDiligenceForm({ companyId, initialData, onSuccess }: 
             </CardContent>
           </Card>
         </div>
-
-        <div className="flex justify-end">
-          <Button 
-            type="submit" 
-            disabled={isLoading}
-            className="min-w-[120px]"
-          >
-            {isLoading ? "Salvando..." : "Salvar Alterações"}
+        
+        <div className="flex justify-end space-x-2">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Salvar"
+            )}
           </Button>
         </div>
       </form>
     </Form>
   );
-}
+};
+
+export default DueDiligenceForm;
