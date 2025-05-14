@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -58,6 +57,19 @@ interface DueDiligenceFormProps {
     governance_risk?: RiskLevel | null;
   };
   onSuccess?: () => void;
+}
+
+export interface DueDiligenceFormData {
+  financial_link: string | null | undefined;
+  financial_analysis: string | null | undefined;
+  financial_risk: string | null | undefined;
+  legal_link: string | null | undefined;
+  legal_analysis: string | null | undefined;
+  legal_risk: string | null | undefined;
+  governance_link: string | null | undefined;
+  governance_analysis: string | null | undefined;
+  governance_risk: string | null | undefined;
+  [key: string]: string | null | undefined; // Esta linha permite valores adicionais de tipo string
 }
 
 export default function DueDiligenceForm({ companyId, initialData, onSuccess }: DueDiligenceFormProps) {

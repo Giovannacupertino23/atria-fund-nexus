@@ -687,6 +687,7 @@ const CompanyDetails = () => {
             companyId={company.id}
             initialAnalysis={company.intelligent_analysis}
             onUpdate={handleAnalysisUpdate}
+            companyData={company}
           />
         </TabsContent>
       </Tabs>

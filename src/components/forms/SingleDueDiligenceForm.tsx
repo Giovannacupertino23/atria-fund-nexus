@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -50,6 +49,13 @@ interface SingleDueDiligenceFormProps {
   onCancel?: () => void;
   title: string;
   borderColor: string;
+}
+
+export interface SingleDueDiligenceFormData {
+  link: string | null | undefined;
+  analysis: string | null | undefined;
+  risk: string | null | undefined;
+  [key: string]: string | null | undefined; // Esta linha permite valores adicionais de tipo string
 }
 
 export default function SingleDueDiligenceForm({
