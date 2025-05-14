@@ -30,6 +30,7 @@ export type Database = {
           governance_link: string | null
           governance_risk: string | null
           id: string
+          intelligent_analysis: string | null
           legal_analysis: string | null
           legal_link: string | null
           legal_risk: string | null
@@ -70,6 +71,7 @@ export type Database = {
           governance_link?: string | null
           governance_risk?: string | null
           id?: string
+          intelligent_analysis?: string | null
           legal_analysis?: string | null
           legal_link?: string | null
           legal_risk?: string | null
@@ -110,6 +112,7 @@ export type Database = {
           governance_link?: string | null
           governance_risk?: string | null
           id?: string
+          intelligent_analysis?: string | null
           legal_analysis?: string | null
           legal_link?: string | null
           legal_risk?: string | null

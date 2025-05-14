@@ -14,6 +14,7 @@ import CompanyEditForm from "@/components/forms/CompanyEditForm";
 import DueDiligenceForm from "@/components/forms/DueDiligenceForm";
 import DueDiligenceView from "@/components/DueDiligenceView";
 import SingleDueDiligenceForm, { DueDiligenceType } from "@/components/forms/SingleDueDiligenceForm";
+import IntelligentAnalysis from "@/components/IntelligentAnalysis";
 
 const CompanyDetails = () => {
   const {
@@ -94,6 +95,11 @@ const CompanyDetails = () => {
     setCurrentDueDiligenceType(null);
   };
 
+  const handleAnalysisUpdate = () => {
+    // Refresh company data to get the latest analysis
+    loadCompanies();
+  };
+  
   if (isLoading || localLoading) {
     return <div className="flex flex-col items-center justify-center h-[70vh]">
         <Loader2 className="h-10 w-10 animate-spin text-atria-red mb-4" />
@@ -459,6 +465,7 @@ const CompanyDetails = () => {
           <TabsTrigger value="about">Sobre</TabsTrigger>
           <TabsTrigger value="risks">Fatores de Risco</TabsTrigger>
           <TabsTrigger value="due_diligence">Due Diligence</TabsTrigger>
+          <TabsTrigger value="intelligent_analysis">Análise Inteligente</TabsTrigger>
         </TabsList>
         
         <TabsContent value="financial">
@@ -673,6 +680,14 @@ const CompanyDetails = () => {
         
         <TabsContent value="due_diligence">
           {renderDueDiligenceContent()}
+        </TabsContent>
+
+        <TabsContent value="intelligent_analysis">
+          <IntelligentAnalysis 
+            companyId={company.id}
+            initialAnalysis={company.intelligent_analysis}
+            onUpdate={handleAnalysisUpdate}
+          />
         </TabsContent>
       </Tabs>
     </div>;
