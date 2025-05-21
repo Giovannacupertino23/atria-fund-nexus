@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -54,7 +55,7 @@ interface DueDiligenceFormProps {
     legal_risk?: RiskLevel | null;
     governance_link?: string | null;
     governance_analysis?: string | null;
-    governance_risk?: string | null;
+    governance_risk?: RiskLevel | null;
   };
   onSuccess?: () => void;
 }

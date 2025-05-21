@@ -693,4 +693,5 @@ const CompanyDetails = () => {
       </Tabs>
     </div>;
 };
+
 export default CompanyDetails;

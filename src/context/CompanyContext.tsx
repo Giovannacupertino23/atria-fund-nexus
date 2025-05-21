@@ -48,6 +48,8 @@ export interface Company {
   governance_link?: string | null;
   governance_analysis?: string | null;
   governance_risk?: RiskLevel | null;
+  // Intelligent Analysis field
+  intelligent_analysis?: string | null;
 }
 
 // Calendar event type
