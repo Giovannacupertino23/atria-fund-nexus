@@ -54,7 +54,7 @@ interface DueDiligenceFormProps {
     legal_risk?: RiskLevel | null;
     governance_link?: string | null;
     governance_analysis?: string | null;
-    governance_risk?: RiskLevel | null;
+    governance_risk?: string | null;
   };
   onSuccess?: () => void;
 }
@@ -69,7 +69,7 @@ export interface DueDiligenceFormData {
   governance_link: string | null | undefined;
   governance_analysis: string | null | undefined;
   governance_risk: string | null | undefined;
-  [key: string]: string | null | undefined; // Esta linha permite valores adicionais de tipo string
+  [key: string]: any; // Changed from string | null | undefined to any to fix type error
 }
 
 export default function DueDiligenceForm({ companyId, initialData, onSuccess }: DueDiligenceFormProps) {

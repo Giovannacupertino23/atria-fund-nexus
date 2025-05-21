@@ -55,7 +55,7 @@ export interface SingleDueDiligenceFormData {
   link: string | null | undefined;
   analysis: string | null | undefined;
   risk: string | null | undefined;
-  [key: string]: string | null | undefined; // Esta linha permite valores adicionais de tipo string
+  [key: string]: any; // Changed from string | null | undefined to any to fix type error
 }
 
 export default function SingleDueDiligenceForm({

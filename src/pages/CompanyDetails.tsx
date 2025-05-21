@@ -685,7 +685,7 @@ const CompanyDetails = () => {
         <TabsContent value="intelligent_analysis">
           <IntelligentAnalysis 
             companyId={company.id}
-            initialAnalysis={company.intelligent_analysis}
+            initialAnalysis={company.intelligent_analysis || null}
             onUpdate={handleAnalysisUpdate}
             companyData={company}
           />
