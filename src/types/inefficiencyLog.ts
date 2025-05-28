@@ -4,7 +4,7 @@ export interface InefficiencyLog {
   company_id: string;
   title: string;
   description: string;
-  category: 'Produto' | 'Comercial' | 'Pessoas' | 'Finanças' | 'Tecnologia' | 'Jurídico' | 'Outro';
+  category: 'Produto' | 'Comercial' | 'Pessoas' | 'Finanças' | 'Tecnologia' | 'Jurídico' | 'Operação' | 'Outro';
   identified_date: string;
   estimated_impact: 'Baixo' | 'Médio' | 'Alto';
   recommended_action: string;

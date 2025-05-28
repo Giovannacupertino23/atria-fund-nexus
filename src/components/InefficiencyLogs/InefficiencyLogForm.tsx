@@ -9,17 +9,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CreateInefficiencyLog, InefficiencyLog } from '@/types/inefficiencyLog';
+import { useCompany } from '@/context/CompanyContext';
 import { format } from 'date-fns';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   description: z.string().min(1, 'Descrição é obrigatória'),
-  category: z.enum(['Produto', 'Comercial', 'Pessoas', 'Finanças', 'Tecnologia', 'Jurídico', 'Outro']),
+  category: z.enum(['Produto', 'Comercial', 'Pessoas', 'Finanças', 'Tecnologia', 'Jurídico', 'Operação', 'Outro']),
   identified_date: z.string().min(1, 'Data de identificação é obrigatória'),
   estimated_impact: z.enum(['Baixo', 'Médio', 'Alto']),
   recommended_action: z.string().min(1, 'Ação recomendada é obrigatória'),
   status: z.enum(['Aberto', 'Em andamento', 'Resolvido']),
-  internal_responsible: z.string().email('E-mail válido é obrigatório'),
+  internal_responsible: z.string().min(1, 'Responsável interno é obrigatório'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -39,6 +40,8 @@ const InefficiencyLogForm = ({
   onCancel, 
   isSubmitting 
 }: InefficiencyLogFormProps) => {
+  const { teamMembers } = useCompany();
+  
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -58,37 +61,6 @@ const InefficiencyLogForm = ({
       ? values 
       : { ...values, company_id: companyId };
     await onSubmit(submitData);
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors = {
-      'Produto': 'text-blue-600',
-      'Comercial': 'text-green-600',
-      'Pessoas': 'text-purple-600',
-      'Finanças': 'text-red-600',
-      'Tecnologia': 'text-indigo-600',
-      'Jurídico': 'text-yellow-600',
-      'Outro': 'text-gray-600'
-    };
-    return colors[category as keyof typeof colors] || 'text-gray-600';
-  };
-
-  const getImpactColor = (impact: string) => {
-    const colors = {
-      'Baixo': 'text-green-600',
-      'Médio': 'text-yellow-600',
-      'Alto': 'text-red-600'
-    };
-    return colors[impact as keyof typeof colors] || 'text-gray-600';
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors = {
-      'Aberto': 'text-red-600',
-      'Em andamento': 'text-yellow-600',
-      'Resolvido': 'text-green-600'
-    };
-    return colors[status as keyof typeof colors] || 'text-gray-600';
   };
 
   return (
@@ -153,6 +125,7 @@ const InefficiencyLogForm = ({
                       <SelectItem value="Finanças">Finanças</SelectItem>
                       <SelectItem value="Tecnologia">Tecnologia</SelectItem>
                       <SelectItem value="Jurídico">Jurídico</SelectItem>
+                      <SelectItem value="Operação">Operação</SelectItem>
                       <SelectItem value="Outro">Outro</SelectItem>
                     </SelectContent>
                   </Select>
@@ -244,9 +217,20 @@ const InefficiencyLogForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Responsável Interno</FormLabel>
-                <FormControl>
-                  <Input placeholder="email@empresa.com" type="email" {...field} />
-                </FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o responsável" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {teamMembers.map((member) => (
+                      <SelectItem key={member.id} value={member.name}>
+                        {member.name} - {member.role}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
