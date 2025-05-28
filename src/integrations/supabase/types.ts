@@ -135,6 +135,59 @@ export type Database = {
         }
         Relationships: []
       }
+      inefficiency_logs: {
+        Row: {
+          category: string
+          company_id: string
+          created_at: string
+          description: string
+          estimated_impact: string
+          id: string
+          identified_date: string
+          internal_responsible: string
+          recommended_action: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          company_id: string
+          created_at?: string
+          description: string
+          estimated_impact: string
+          id?: string
+          identified_date: string
+          internal_responsible: string
+          recommended_action: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          created_at?: string
+          description?: string
+          estimated_impact?: string
+          id?: string
+          identified_date?: string
+          internal_responsible?: string
+          recommended_action?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inefficiency_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

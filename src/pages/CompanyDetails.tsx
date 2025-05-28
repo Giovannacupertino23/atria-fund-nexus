@@ -15,30 +15,19 @@ import DueDiligenceForm from "@/components/forms/DueDiligenceForm";
 import DueDiligenceView from "@/components/DueDiligenceView";
 import SingleDueDiligenceForm, { DueDiligenceType } from "@/components/forms/SingleDueDiligenceForm";
 import IntelligentAnalysis from "@/components/IntelligentAnalysis";
+import InefficiencyLogsList from "@/components/InefficiencyLogs/InefficiencyLogsList";
 
 const CompanyDetails = () => {
-  const {
-    id
-  } = useParams<{
-    id: string;
-  }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const {
-    getCompanyById,
-    loadCompanies,
-    isLoading,
-    companyLoadError,
-    loadingCompanyId,
-    companies
-  } = useCompany();
-  const {
-    toast
-  } = useToast();
+  const { getCompanyById, loadCompanies, isLoading, companyLoadError, loadingCompanyId, companies } = useCompany();
+  const { toast } = useToast();
   const [retryCount, setRetryCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDueDiligenceEditMode, setIsDueDiligenceEditMode] = useState(false);
   const [currentDueDiligenceType, setCurrentDueDiligenceType] = useState<DueDiligenceType | null>(null);
+  const [showInefficiencyLogs, setShowInefficiencyLogs] = useState(false);
   
   useEffect(() => {
     const loadData = async () => {
@@ -466,6 +455,7 @@ const CompanyDetails = () => {
           <TabsTrigger value="risks">Fatores de Risco</TabsTrigger>
           <TabsTrigger value="due_diligence">Due Diligence</TabsTrigger>
           <TabsTrigger value="intelligent_analysis">Análise Inteligente</TabsTrigger>
+          <TabsTrigger value="inefficiency_logs">Logs de Ineficiência</TabsTrigger>
         </TabsList>
         
         <TabsContent value="financial">
@@ -688,6 +678,14 @@ const CompanyDetails = () => {
             initialAnalysis={company.intelligent_analysis || null}
             onUpdate={handleAnalysisUpdate}
             companyData={company}
+          />
+        </TabsContent>
+
+        <TabsContent value="inefficiency_logs">
+          <InefficiencyLogsList 
+            companyId={company.id}
+            isVisible={showInefficiencyLogs}
+            onToggleVisibility={() => setShowInefficiencyLogs(!showInefficiencyLogs)}
           />
         </TabsContent>
       </Tabs>
