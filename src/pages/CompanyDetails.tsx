@@ -16,6 +16,7 @@ import DueDiligenceView from "@/components/DueDiligenceView";
 import SingleDueDiligenceForm, { DueDiligenceType } from "@/components/forms/SingleDueDiligenceForm";
 import IntelligentAnalysis from "@/components/IntelligentAnalysis";
 import InefficiencyLogsList from "@/components/InefficiencyLogs/InefficiencyLogsList";
+import AIAnalysis from "@/components/AIAnalysis";
 
 const CompanyDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -85,7 +86,6 @@ const CompanyDetails = () => {
   };
 
   const handleAnalysisUpdate = () => {
-    // Refresh company data to get the latest analysis
     loadCompanies();
   };
   
@@ -188,14 +188,12 @@ const CompanyDetails = () => {
     }
   };
   
-  // Função auxiliar para calcular médias com segurança
   const calculateAverage = (values: (number | null | undefined)[]) => {
     const validValues = values.filter((v): v is number => v !== null && v !== undefined);
     if (validValues.length === 0) return null;
     return validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
   };
   
-  // Calcular médias de EBITDA e YoY com segurança
   const ebitdaAvg = calculateAverage([company.ebitda_2023, company.ebitda_2024, company.ebitda_2025]);
   const yoyAvg = calculateAverage([company.yoy_growth_21_22, company.yoy_growth_22_23, company.yoy_growth_23_24]);
   
@@ -455,6 +453,7 @@ const CompanyDetails = () => {
           <TabsTrigger value="risks">Fatores de Risco</TabsTrigger>
           <TabsTrigger value="due_diligence">Due Diligence</TabsTrigger>
           <TabsTrigger value="intelligent_analysis">Análise Inteligente</TabsTrigger>
+          <TabsTrigger value="ai_analysis">Análise com IA</TabsTrigger>
           <TabsTrigger value="inefficiency_logs">Logs de Ineficiência</TabsTrigger>
         </TabsList>
         
@@ -678,6 +677,13 @@ const CompanyDetails = () => {
             initialAnalysis={company.intelligent_analysis || null}
             onUpdate={handleAnalysisUpdate}
             companyData={company}
+          />
+        </TabsContent>
+
+        <TabsContent value="ai_analysis">
+          <AIAnalysis 
+            companyData={company}
+            companyId={company.id}
           />
         </TabsContent>
 
