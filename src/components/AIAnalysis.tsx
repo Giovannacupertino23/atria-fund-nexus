@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, Loader2 } from "lucide-react";
+import { Brain, Loader2, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AIAnalysisProps {
   companyData: any;
@@ -15,6 +16,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ companyData, companyId }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string>('');
   const [prompt, setPrompt] = useState('');
+  const [isSendingToWebhook, setIsSendingToWebhook] = useState(false);
   const { toast } = useToast();
 
   const handleAnalyze = async () => {
@@ -89,6 +91,48 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ companyData, companyId }) => {
     }
   };
 
+  const handleSendToWebhook = async () => {
+    setIsSendingToWebhook(true);
+    
+    try {
+      // Coletar todas as informações da empresa
+      const allCompanyData = {
+        ...companyData,
+        prompt_usuario: prompt,
+        resultado_analise: analysisResult
+      };
+
+      console.log('Enviando dados para webhook:', allCompanyData);
+
+      // Chamar a edge function que fará a integração com o webhook
+      const { data, error } = await supabase.functions.invoke('webhook-integration', {
+        body: {
+          companyId: companyId,
+          companyData: allCompanyData
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Dados enviados com sucesso",
+        description: "As informações foram enviadas para o webhook e a resposta foi salva."
+      });
+
+      console.log('Resposta do webhook salva:', data);
+
+    } catch (error) {
+      console.error('Erro ao enviar para webhook:', error);
+      toast({
+        title: "Erro ao enviar dados",
+        description: "Ocorreu um erro ao enviar os dados para o webhook.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingToWebhook(false);
+    }
+  };
+
   // Função simulada de análise - substituir por integração real com IA
   const simulateAIAnalysis = async (prompt: string): Promise<string> => {
     return new Promise((resolve) => {
@@ -157,6 +201,27 @@ Esta é uma análise automatizada baseada nos dados disponíveis. Para insights 
             <h4 className="font-medium mb-2">Resultado da Análise:</h4>
             <div className="prose prose-sm max-w-none">
               <p className="whitespace-pre-wrap text-sm">{analysisResult}</p>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t">
+              <Button 
+                onClick={handleSendToWebhook}
+                disabled={isSendingToWebhook}
+                className="w-full"
+                variant="outline"
+              >
+                {isSendingToWebhook ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Enviando para Webhook...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Enviar Dados para Webhook
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         )}
