@@ -188,6 +188,50 @@ export type Database = {
           },
         ]
       }
+      webhook_responses: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          request_data: Json
+          response_data: string | null
+          response_status: number | null
+          status: string
+          updated_at: string
+          webhook_url: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          request_data: Json
+          response_data?: string | null
+          response_status?: number | null
+          status?: string
+          updated_at?: string
+          webhook_url: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          request_data?: Json
+          response_data?: string | null
+          response_status?: number | null
+          status?: string
+          updated_at?: string
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_responses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

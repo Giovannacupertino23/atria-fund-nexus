@@ -7,9 +7,10 @@ import { useToast } from '@/hooks/use-toast';
 export const useInefficiencyLogs = (companyId: string) => {
   const [logs, setLogs] = useState<InefficiencyLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingAction, setIsLoadingAction] = useState(false);
   const { toast } = useToast();
 
-  const fetchLogs = async () => {
+  const loadLogs = async () => {
     if (!companyId) return;
     
     setIsLoading(true);
@@ -22,7 +23,6 @@ export const useInefficiencyLogs = (companyId: string) => {
 
       if (error) throw error;
       
-      // Type assertion para garantir que os dados estão no formato correto
       setLogs(data as InefficiencyLog[]);
     } catch (error) {
       console.error('Erro ao buscar logs:', error);
@@ -37,6 +37,7 @@ export const useInefficiencyLogs = (companyId: string) => {
   };
 
   const createLog = async (logData: CreateInefficiencyLog) => {
+    setIsLoadingAction(true);
     try {
       const { data, error } = await supabase
         .from('inefficiency_logs')
@@ -62,10 +63,13 @@ export const useInefficiencyLogs = (companyId: string) => {
         variant: "destructive"
       });
       throw error;
+    } finally {
+      setIsLoadingAction(false);
     }
   };
 
   const updateLog = async (id: string, updates: UpdateInefficiencyLog) => {
+    setIsLoadingAction(true);
     try {
       const { data, error } = await supabase
         .from('inefficiency_logs')
@@ -94,10 +98,13 @@ export const useInefficiencyLogs = (companyId: string) => {
         variant: "destructive"
       });
       throw error;
+    } finally {
+      setIsLoadingAction(false);
     }
   };
 
   const deleteLog = async (id: string) => {
+    setIsLoadingAction(true);
     try {
       const { error } = await supabase
         .from('inefficiency_logs')
@@ -120,19 +127,64 @@ export const useInefficiencyLogs = (companyId: string) => {
         variant: "destructive"
       });
       throw error;
+    } finally {
+      setIsLoadingAction(false);
     }
   };
 
+  const exportToCsv = () => {
+    if (logs.length === 0) {
+      toast({
+        title: "Nenhum dado para exportar",
+        description: "Não há logs para exportar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const csvContent = [
+      ['Título', 'Categoria', 'Data Identificada', 'Descrição', 'Impacto Estimado', 'Ação Recomendada', 'Status', 'Responsável Interno'].join(','),
+      ...logs.map(log => [
+        `"${log.title}"`,
+        `"${log.category}"`,
+        log.identified_date,
+        `"${log.description}"`,
+        `"${log.estimated_impact}"`,
+        `"${log.recommended_action}"`,
+        `"${log.status}"`,
+        `"${log.internal_responsible}"`
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `logs_ineficiencia_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Exportação concluída",
+      description: "Os logs foram exportados com sucesso."
+    });
+  };
+
   useEffect(() => {
-    fetchLogs();
+    loadLogs();
   }, [companyId]);
 
   return {
     logs,
     isLoading,
+    isLoadingAction,
+    loadLogs,
     createLog,
     updateLog,
     deleteLog,
-    refetch: fetchLogs
+    exportToCsv,
+    refetch: loadLogs
   };
 };
