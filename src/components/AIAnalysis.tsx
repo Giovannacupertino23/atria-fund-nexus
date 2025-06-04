@@ -68,7 +68,6 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ companyData, companyId }) => {
       `;
 
       // Simulação de chamada para IA (substituir por integração real)
-      // Aqui você pode integrar com OpenAI, Claude, ou outra API de IA
       const mockAnalysis = await simulateAIAnalysis(contextualPrompt);
       
       setAnalysisResult(mockAnalysis);
@@ -126,19 +125,6 @@ Esta é uma análise automatizada baseada nos dados disponíveis. Para insights 
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="ai-prompt" className="text-sm font-medium">
-            O que você gostaria de analisar sobre esta empresa?
-          </label>
-          <Textarea
-            id="ai-prompt"
-            placeholder="Ex: Qual é o potencial de crescimento desta empresa? Quais são os principais riscos? Como está a saúde financeira?"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            className="min-h-[100px]"
-          />
-        </div>
-        
         <Button 
           onClick={handleAnalyze}
           disabled={isAnalyzing || !prompt.trim()}
@@ -156,6 +142,15 @@ Esta é uma análise automatizada baseada nos dados disponíveis. Para insights 
             </>
           )}
         </Button>
+
+        <div className="space-y-2">
+          <Textarea
+            placeholder="Digite sua pergunta ou instrução para análise..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            className="min-h-[100px]"
+          />
+        </div>
 
         {analysisResult && (
           <div className="mt-4 p-4 bg-muted rounded-lg">
