@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, Loader2, Send } from "lucide-react";
+import { Brain, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,7 +13,7 @@ interface AIAnalysisProps {
 }
 
 const AIAnalysis: React.FC<AIAnalysisProps> = ({ companyData, companyId }) => {
-  const [prompt, setPrompt] = useState('');
+  const [response, setResponse] = useState('');
   const [isSendingToWebhook, setIsSendingToWebhook] = useState(false);
   const { toast } = useToast();
 
@@ -23,8 +23,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ companyData, companyId }) => {
     try {
       // Coletar todas as informações da empresa
       const allCompanyData = {
-        ...companyData,
-        prompt_usuario: prompt
+        ...companyData
       };
 
       console.log('Enviando dados para webhook:', allCompanyData);
@@ -39,9 +38,14 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ companyData, companyId }) => {
 
       if (error) throw error;
 
+      // Exibir a resposta no campo de texto
+      if (data && data.webhookResponse) {
+        setResponse(data.webhookResponse);
+      }
+
       toast({
-        title: "Dados enviados com sucesso",
-        description: "As informações foram enviadas para o webhook e a resposta foi salva."
+        title: "Análise concluída",
+        description: "A análise foi processada e a resposta foi salva."
       });
 
       console.log('Resposta do webhook salva:', data);
@@ -49,8 +53,8 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ companyData, companyId }) => {
     } catch (error) {
       console.error('Erro ao enviar para webhook:', error);
       toast({
-        title: "Erro ao enviar dados",
-        description: "Ocorreu um erro ao enviar os dados para o webhook.",
+        title: "Erro ao processar análise",
+        description: "Ocorreu um erro ao processar a análise.",
         variant: "destructive"
       });
     } finally {
@@ -72,7 +76,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ companyData, companyId }) => {
       <CardContent className="space-y-4">
         <Button 
           onClick={handleSendToWebhook}
-          disabled={isSendingToWebhook || !prompt.trim()}
+          disabled={isSendingToWebhook}
           className="w-full"
         >
           {isSendingToWebhook ? (
@@ -90,10 +94,11 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ companyData, companyId }) => {
 
         <div className="space-y-2">
           <Textarea
-            placeholder="Digite sua pergunta ou instrução para análise..."
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            className="min-h-[100px]"
+            placeholder="A resposta da análise aparecerá aqui..."
+            value={response}
+            onChange={(e) => setResponse(e.target.value)}
+            className="min-h-[200px]"
+            readOnly={false}
           />
         </div>
       </CardContent>
