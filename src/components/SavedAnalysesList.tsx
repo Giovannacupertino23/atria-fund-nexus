@@ -42,14 +42,22 @@ const SavedAnalysesList: React.FC<SavedAnalysesListProps> = ({ companyId }) => {
   const { toast } = useToast();
 
   const loadAnalyses = async () => {
+    setIsLoading(true);
     try {
+      console.log('Carregando análises para empresa:', companyId);
+      
       const { data, error } = await supabase
         .from('saved_analyses')
         .select('*')
         .eq('company_id', companyId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro na consulta:', error);
+        throw error;
+      }
+      
+      console.log('Análises carregadas:', data);
       setAnalyses(data || []);
     } catch (error) {
       console.error('Erro ao carregar análises:', error);
@@ -64,7 +72,9 @@ const SavedAnalysesList: React.FC<SavedAnalysesListProps> = ({ companyId }) => {
   };
 
   useEffect(() => {
-    loadAnalyses();
+    if (companyId) {
+      loadAnalyses();
+    }
   }, [companyId]);
 
   const handleEdit = (analysis: SavedAnalysis) => {

@@ -23,6 +23,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({
   const [isSendingToWebhook, setIsSendingToWebhook] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveForm, setShowSaveForm] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { toast } = useToast();
 
   const handleSendToWebhook = async () => {
@@ -92,16 +93,26 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({
 
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      console.log('Salvando análise para empresa:', companyId);
+      console.log('Título:', analysisTitle.trim());
+      console.log('Conteúdo:', response.trim());
+
+      const { data, error } = await supabase
         .from('saved_analyses')
         .insert({
           company_id: companyId,
           title: analysisTitle.trim(),
           content: response.trim(),
           analysis_type: 'ai_analysis'
-        });
+        })
+        .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao salvar análise:', error);
+        throw error;
+      }
+      
+      console.log('Análise salva com sucesso:', data);
       
       toast({
         title: "Análise salva",
@@ -113,7 +124,9 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({
       setAnalysisTitle('');
       setShowSaveForm(false);
       
-      // Recarregar a lista (será feito automaticamente pelo componente filho)
+      // Forçar atualização da lista
+      setRefreshTrigger(prev => prev + 1);
+      
     } catch (error) {
       console.error('Erro ao salvar análise:', error);
       toast({
@@ -281,7 +294,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({
         </CardContent>
       </Card>
 
-      <SavedAnalysesList companyId={companyId} />
+      <SavedAnalysesList companyId={companyId} key={refreshTrigger} />
     </div>
   );
 };
