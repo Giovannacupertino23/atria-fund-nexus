@@ -29,7 +29,7 @@ serve(async (req) => {
     }
 
     // Enviar dados para o webhook
-    const webhookResponse = await fetch('https://n8n.isilab.com.br/webhook-test/10183e88-7a23-46bd-bd2f-4e7cd2ef7e08', {
+    const webhookResponse = await fetch('https://n8n.isilab.com.br/webhook/10183e88-7a23-46bd-bd2f-4e7cd2ef7e08', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ serve(async (req) => {
           company_id: companyId,
           request_data: webhookData,
           response_data: webhookResult,
-          webhook_url: 'https://n8n.isilab.com.br/webhook-test/10183e88-7a23-46bd-bd2f-4e7cd2ef7e08',
+          webhook_url: 'https://n8n.isilab.com.br/webhook/10183e88-7a23-46bd-bd2f-4e7cd2ef7e08',
           status: webhookResponse.ok ? 'success' : 'error',
           response_status: webhookResponse.status
         }
