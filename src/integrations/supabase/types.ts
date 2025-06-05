@@ -188,6 +188,44 @@ export type Database = {
           },
         ]
       }
+      saved_analyses: {
+        Row: {
+          analysis_type: string
+          company_id: string
+          content: string
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          analysis_type?: string
+          company_id: string
+          content: string
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          analysis_type?: string
+          company_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_saved_analyses_company"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_responses: {
         Row: {
           company_id: string

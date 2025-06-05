@@ -2,10 +2,12 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, Loader2, Save, Download } from "lucide-react";
+import { Brain, Loader2, Save, Download, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import SavedAnalysesList from "./SavedAnalysesList";
 
 interface AIAnalysisProps {
   companyData: any;
@@ -17,8 +19,10 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({
   companyId
 }) => {
   const [response, setResponse] = useState('');
+  const [analysisTitle, setAnalysisTitle] = useState('');
   const [isSendingToWebhook, setIsSendingToWebhook] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSaveForm, setShowSaveForm] = useState(false);
   const { toast } = useToast();
 
   const handleSendToWebhook = async () => {
@@ -43,11 +47,15 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({
       // Exibir a resposta no campo de texto
       if (data && data.webhookResponse) {
         setResponse(data.webhookResponse);
+        // Sugerir um título automático baseado na data
+        const now = new Date();
+        const defaultTitle = `Análise IA - ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+        setAnalysisTitle(defaultTitle);
       }
 
       toast({
         title: "Análise concluída",
-        description: "A análise foi processada e a resposta foi salva."
+        description: "A análise foi processada e a resposta foi gerada."
       });
 
       console.log('Resposta do webhook salva:', data);
@@ -63,7 +71,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({
     }
   };
 
-  const handleSaveAnalysis = async () => {
+  const handleSaveToList = async () => {
     if (!response.trim()) {
       toast({
         title: "Nada para salvar",
@@ -73,19 +81,39 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({
       return;
     }
 
+    if (!analysisTitle.trim()) {
+      toast({
+        title: "Título obrigatório",
+        description: "Por favor, informe um título para a análise.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const { error } = await supabase
-        .from('companies')
-        .update({ intelligent_analysis: response })
-        .eq('id', companyId);
+        .from('saved_analyses')
+        .insert({
+          company_id: companyId,
+          title: analysisTitle.trim(),
+          content: response.trim(),
+          analysis_type: 'ai_analysis'
+        });
       
       if (error) throw error;
       
       toast({
         title: "Análise salva",
-        description: "A análise inteligente foi salva com sucesso."
+        description: "A análise foi salva na lista de análises."
       });
+
+      // Limpar o formulário
+      setResponse('');
+      setAnalysisTitle('');
+      setShowSaveForm(false);
+      
+      // Recarregar a lista (será feito automaticamente pelo componente filho)
     } catch (error) {
       console.error('Erro ao salvar análise:', error);
       toast({
@@ -110,7 +138,9 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({
 
     try {
       // Criar conteúdo do arquivo
-      const content = `ANÁLISE INTELIGENTE - ${companyData.name || 'Empresa'}\n` +
+      const title = analysisTitle.trim() || 'Análise IA';
+      const content = `${title.toUpperCase()}\n` +
+                     `Empresa: ${companyData.name || 'Empresa'}\n` +
                      `Data: ${new Date().toLocaleDateString('pt-BR')}\n` +
                      `${'-'.repeat(50)}\n\n` +
                      response;
@@ -120,7 +150,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       
-      const fileName = `analise_ia_${companyData.name ? companyData.name.replace(/\s+/g, '_').toLowerCase() : 'empresa'}_${new Date().toISOString().split('T')[0]}.txt`;
+      const fileName = `${title.replace(/\s+/g, '_').toLowerCase()}_${companyData.name ? companyData.name.replace(/\s+/g, '_').toLowerCase() : 'empresa'}_${new Date().toISOString().split('T')[0]}.txt`;
       
       link.href = url;
       link.download = fileName;
@@ -144,78 +174,115 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Brain className="h-5 w-5" />
-          Análise Inteligente com IA
-        </CardTitle>
-        <CardDescription>
-          Clique em analisar e receba análises contextualizadas baseadas em IA
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Button 
-          onClick={handleSendToWebhook} 
-          disabled={isSendingToWebhook} 
-          className="w-full"
-        >
-          {isSendingToWebhook ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Analisando...
-            </>
-          ) : (
-            <>
-              <Brain className="h-4 w-4 mr-2" />
-              Analisar
-            </>
-          )}
-        </Button>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5" />
+            Nova Análise com IA
+          </CardTitle>
+          <CardDescription>
+            Gere uma nova análise contextualizada baseada em IA
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button 
+            onClick={handleSendToWebhook} 
+            disabled={isSendingToWebhook} 
+            className="w-full"
+          >
+            {isSendingToWebhook ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Analisando...
+              </>
+            ) : (
+              <>
+                <Brain className="h-4 w-4 mr-2" />
+                Gerar Nova Análise
+              </>
+            )}
+          </Button>
 
-        <div className="space-y-2">
-          <Textarea
-            placeholder="A resposta da análise aparecerá aqui..."
-            value={response}
-            onChange={(e) => setResponse(e.target.value)}
-            className="min-h-[200px]"
-            readOnly={false}
-          />
-        </div>
+          {response.trim() && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Análise Gerada:</label>
+                <Textarea
+                  placeholder="A resposta da análise aparecerá aqui..."
+                  value={response}
+                  onChange={(e) => setResponse(e.target.value)}
+                  className="min-h-[200px]"
+                />
+              </div>
 
-        {response.trim() && (
-          <div className="flex gap-2">
-            <Button
-              onClick={handleSaveAnalysis}
-              disabled={isSaving}
-              variant="outline"
-              className="flex-1"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Salvar Análise
-                </>
+              {showSaveForm && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Título da Análise:</label>
+                  <Input
+                    placeholder="Digite um título para identificar esta análise"
+                    value={analysisTitle}
+                    onChange={(e) => setAnalysisTitle(e.target.value)}
+                  />
+                </div>
               )}
-            </Button>
 
-            <Button
-              onClick={handleExportAnalysis}
-              variant="outline"
-              className="flex-1"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Exportar Análise
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <div className="flex gap-2">
+                {!showSaveForm ? (
+                  <Button
+                    onClick={() => setShowSaveForm(true)}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Salvar na Lista
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      onClick={() => setShowSaveForm(false)}
+                      variant="outline"
+                      className="flex-1"
+                      disabled={isSaving}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={handleSaveToList}
+                      disabled={isSaving}
+                      className="flex-1"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Confirmar Salvamento
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+
+                <Button
+                  onClick={handleExportAnalysis}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <SavedAnalysesList companyId={companyId} />
+    </div>
   );
 };
 
