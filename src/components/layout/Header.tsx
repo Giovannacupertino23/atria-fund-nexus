@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, Building2, PieChart, Calendar } from "lucide-react";
+import { Menu, X, ChevronDown, Building2, PieChart, Calendar, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 const Header = () => {
@@ -36,23 +37,48 @@ const Header = () => {
               <div className="h-10 w-10 rounded-md bg-atria-red flex items-center justify-center font-bold text-xl">A</div>
               <span className="text-xl font-semibold hidden sm:block">Atria</span>
             </Link>
-            <nav className="ml-10 space-x-2 hidden md:flex">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 hover:bg-atria-red/20 ${
-                    isActive(item.href)
-                      ? "text-white bg-atria-red/20 font-medium"
-                      : "text-gray-300 hover:text-white"
-                  }`}
+
+            {/* Menu suspenso para navegação */}
+            <div className="ml-6">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="text-white hover:bg-atria-red/20 flex items-center gap-2"
+                  >
+                    <MoreHorizontal className="h-5 w-5" />
+                    <span className="hidden sm:block">Menu</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  className="w-56 bg-white shadow-lg border" 
+                  align="start"
+                  sideOffset={8}
                 >
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
+                  {navigation.map((item, index) => (
+                    <div key={item.name}>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to={item.href}
+                          className={`flex items-center gap-3 px-3 py-2 text-sm font-medium cursor-pointer ${
+                            isActive(item.href)
+                              ? "bg-atria-red/10 text-atria-red font-semibold"
+                              : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {item.name}
+                        </Link>
+                      </DropdownMenuItem>
+                      {index < navigation.length - 1 && <DropdownMenuSeparator />}
+                    </div>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
+
           <div className="flex items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
